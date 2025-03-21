@@ -6,6 +6,12 @@ edition = "2024"
 [dependencies]
 tokio = { version = "1.44.1", default-features = false, features = ["macros", "rt-multi-thread"] }
 
+serde = { version = "1.0.219", features = ["derive"] }
+
 anyhow = "1.0.97"
 
 axum = { version = "0.8.1", features = ["macros"] }
+
+config = "0.15.11"
+strum = { version = "0.27.1", features = ["derive"] }
+serde-aux = "4.6.0"
