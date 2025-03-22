@@ -1,3 +1,5 @@
+mod error;
+
 use std::net::SocketAddr;
 
 use anyhow::Context;
