@@ -5,8 +5,8 @@ mod view;
 use std::net::SocketAddr;
 
 use anyhow::Context;
-use axum::{middleware, routing::get, Router};
-use serde::Serialize;
+use axum::{extract::Query, middleware, routing::get, Router};
+use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use view::{render_view, View};
 
@@ -21,11 +21,18 @@ pub async fn serve(config: HttpConfig) -> anyhow::Result<()> {
         .context("start http server")
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
-struct Index {}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct Index {
+    name: Option<String>,
+}
 
 fn router() -> Router {
     Router::new()
-        .route("/", get(View::new("index.html", Index {})))
+        .route("/", get(index))
         .layer(middleware::from_fn(render_view))
+}
+
+async fn index(Query(mut idx): Query<Index>) -> View<Index> {
+    idx.name.get_or_insert_with(|| "World".into());
+    View::new("index.html", idx)
 }
