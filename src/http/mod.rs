@@ -32,6 +32,7 @@ fn router() -> Router {
         .layer(middleware::from_fn(render_view))
 }
 
+#[tracing::instrument(level = "trace", ret(level = "debug"))]
 async fn index(Query(mut idx): Query<Index>) -> View<Index> {
     idx.name.get_or_insert_with(|| "World".into());
     View::new("index.html", idx)

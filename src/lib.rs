@@ -1,4 +1,5 @@
 pub mod config;
+pub mod telemetry;
 pub mod http;
 
 mod error;
