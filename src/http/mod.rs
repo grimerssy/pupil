@@ -8,6 +8,7 @@ use anyhow::Context;
 use axum::{extract::Query, middleware, routing::get, Router};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
+use tower_http::services::ServeDir;
 use view::{render_view, View};
 
 use crate::config::HttpConfig;
@@ -28,6 +29,7 @@ struct Index {
 
 fn router() -> Router {
     Router::new()
+        .nest_service("/static", ServeDir::new("dist"))
         .route("/", get(index))
         .layer(middleware::from_fn(render_view))
 }
