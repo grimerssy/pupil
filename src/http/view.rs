@@ -58,6 +58,7 @@ pub async fn render_view(response_type: LazyResponseType, req: Request, next: Ne
     }
 }
 
+#[tracing::instrument(level = "trace", skip_all, err(Debug))]
 fn render_template(view: TypeErasedView) -> crate::Result<Html<String>> {
     let renderer = renderer()?;
     #[cfg(debug_assertions)]
