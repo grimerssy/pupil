@@ -55,19 +55,21 @@ where
     T: Serialize,
 {
     let renderer = renderer()?;
-    // TODO function under cfg
     #[cfg(debug_assertions)]
-    let renderer = {
-        let mut renderer = renderer.clone();
-        renderer.full_reload().context("reload templates")?;
-        renderer
-    };
+    let renderer = reload_templates(renderer)?;
     let context =
         tera::Context::from_serialize(template.data).context("serialize template context")?;
     let html = renderer
         .render(&template.name, &context)
         .context("render template")?;
     Ok(Html(html))
+}
+
+#[cfg(debug_assertions)]
+fn reload_templates(old: &'static Tera) -> crate::Result<Tera> {
+    let mut renderer = old.clone();
+    renderer.full_reload().context("reload templates")?;
+    Ok(renderer)
 }
 
 impl<T> IntoResponse for Template<T>
