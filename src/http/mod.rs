@@ -1,15 +1,13 @@
-mod error;
-mod response_type;
-mod view;
+mod middleware;
 
 use std::net::SocketAddr;
 
 use anyhow::Context;
-use axum::{extract::Query, middleware, routing::get, Router};
+use axum::{extract::Query, routing::get, Router};
+use middleware::view::{render_view, ErrorView, ResultView, View};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
-use view::{render_view, View};
 
 use crate::config::HttpConfig;
 
@@ -31,7 +29,7 @@ fn router() -> Router {
     Router::new()
         .nest_service("/static", ServeDir::new("dist"))
         .route("/", get(index))
-        .layer(middleware::from_fn(render_view))
+        .layer(axum::middleware::from_fn(render_view))
 }
 
 #[tracing::instrument(level = "trace", ret(level = "debug"))]

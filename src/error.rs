@@ -2,7 +2,7 @@ use core::fmt;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("an unexpected error occurred")]
+    #[error("An unexpected error occurred")]
     Internal(ErrorChain),
 }
 
