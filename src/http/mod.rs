@@ -4,10 +4,13 @@ use std::net::SocketAddr;
 
 use anyhow::Context;
 use axum::{extract::Query, routing::get, Router};
-use middleware::view::{render_view, ErrorView, ResultView, View};
+use middleware::{
+    error::{handle_not_found, handle_panic},
+    view::{render_view, ResultView, View},
+};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
-use tower_http::services::ServeDir;
+use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 
 use crate::config::HttpConfig;
 
@@ -29,8 +32,8 @@ fn router() -> Router {
     Router::new()
         .nest_service("/static", ServeDir::new("dist"))
         .route("/", get(index))
-        .fallback(handle_404)
-        // has to be last to work
+        .fallback(handle_not_found)
+        .layer(CatchPanicLayer::custom(handle_panic))
         .layer(axum::middleware::from_fn(render_view))
 }
 
@@ -42,9 +45,4 @@ async fn index(Query(mut idx): Query<Index>) -> ResultView<Index> {
     let idx = idx.map_err(View::error)?;
     let view = View::new("index.html", idx);
     Ok(view)
-}
-
-#[tracing::instrument(level = "trace", ret(level = "warn"))]
-async fn handle_404() -> ErrorView {
-    View::error(crate::Error::NotFound)
 }
