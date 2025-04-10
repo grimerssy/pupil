@@ -27,7 +27,8 @@ pub fn handle_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
             anyhow!("{msg}")
         } else {
             anyhow!("unknown panic message")
-        }.context("catch panic");
+        }
+        .context("catch panic");
         Error::from(error)
     }
     View::error(catch_panic(panic_message)).into_response()
