@@ -2,6 +2,8 @@ use core::fmt;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Requested resource was not found")]
+    NotFound,
     #[error("An unexpected error occurred")]
     Internal(ErrorChain),
 }

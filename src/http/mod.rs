@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 
 use anyhow::Context;
 use axum::{extract::Query, routing::get, Router};
-use middleware::view::{render_view, ResultView, View};
+use middleware::view::{render_view, ErrorView, ResultView, View};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
@@ -29,6 +29,8 @@ fn router() -> Router {
     Router::new()
         .nest_service("/static", ServeDir::new("dist"))
         .route("/", get(index))
+        .fallback(handle_404)
+        // has to be last to work
         .layer(axum::middleware::from_fn(render_view))
 }
 
@@ -40,4 +42,9 @@ async fn index(Query(mut idx): Query<Index>) -> ResultView<Index> {
     let idx = idx.map_err(View::error)?;
     let view = View::new("index.html", idx);
     Ok(view)
+}
+
+#[tracing::instrument(level = "trace", ret(level = "warn"))]
+async fn handle_404() -> ErrorView {
+    View::error(crate::Error::NotFound)
 }

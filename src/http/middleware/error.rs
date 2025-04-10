@@ -28,6 +28,7 @@ fn create_response(error: &Error, body: Response) -> Response {
 
 fn status_code(error: &Error) -> StatusCode {
     match error {
+        Error::NotFound => StatusCode::NOT_FOUND,
         Error::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
