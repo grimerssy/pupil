@@ -20,7 +20,9 @@ pub struct View<T> {
     data: T,
 }
 
-pub type ResultView<T> = Result<View<T>, View<crate::Error>>;
+pub type ResultView<T> = Result<View<T>, ErrorView>;
+
+pub type ErrorView = View<crate::Error>;
 
 struct SealedData(Box<dyn erased_serde::Serialize + Send + Sync>);
 
@@ -51,15 +53,18 @@ pub async fn render_view(response_type: LazyResponseType, req: Request, next: Ne
     let Some(view) = response.extensions_mut().remove::<View<SealedData>>() else {
         return response;
     };
+    let body = match response_type.parse() {
+        ResponseType::Json => Json(view.data.0).into_response(),
+        ResponseType::Html => Template::with_meta(view.template_meta, view.data.0).into_response(),
+    };
+    if !body.status().is_success() {
+        return body;
+    }
     // parts can't contain *implicitly set* content-type so no need to sanitize
     // - only one IntoResponse can be contained in Response and that's View
     // - SealedData is a private type, hence can't be injected via Extension from outside
     let (parts, _) = response.into_parts();
-    let response = match response_type.parse() {
-        ResponseType::Json => Json(view.data.0).into_response(),
-        ResponseType::Html => Template::with_meta(view.template_meta, view.data.0).into_response(),
-    };
-    (parts, response).into_response()
+    (parts, body).into_response()
 }
 
 impl Clone for View<SealedData> {
