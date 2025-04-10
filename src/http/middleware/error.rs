@@ -1,12 +1,9 @@
-use axum::http::StatusCode;
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 
 use crate::Error;
-
-#[derive(Clone, Debug)]
-pub struct ErrorResponse {
-    pub status_code: StatusCode,
-    pub message: ErrorMessage,
-}
 
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -14,25 +11,26 @@ pub struct ErrorMessage {
     error: String,
 }
 
-impl ErrorResponse {
-    pub fn new(error: &Error) -> Self {
-        Self {
-            status_code: status_code(error),
-            message: ErrorMessage::new(error),
-        }
-    }
+pub fn error_response<T>(
+    error: &crate::Error,
+    into_body: impl FnOnce(ErrorMessage) -> T,
+) -> Response
+where
+    T: IntoResponse,
+{
+    let msg = ErrorMessage {
+        error: error.to_string(),
+    };
+    let body = into_body(msg).into_response();
+    create_response(error, body)
+}
+
+fn create_response(error: &Error, body: Response) -> Response {
+    (status_code(error), body).into_response()
 }
 
 fn status_code(error: &Error) -> StatusCode {
     match error {
         Error::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
-    }
-}
-
-impl ErrorMessage {
-    fn new(error: &Error) -> Self {
-        Self {
-            error: error.to_string(),
-        }
     }
 }

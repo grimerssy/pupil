@@ -5,9 +5,7 @@ use axum::response::{Html, IntoResponse, Response};
 use serde::Serialize;
 use tera::Tera;
 
-use super::error::ErrorResponse;
-
-pub(super) const ERROR_TEMPLATE: &str = "error.html";
+use super::error::error_response;
 
 static TEMPLATES: &str = "templates/**/*.html";
 
@@ -28,24 +26,48 @@ fn renderer() -> crate::Result<&'static Tera> {
 
 #[derive(Clone, Debug)]
 pub struct Template<T> {
-    name: Cow<'static, str>,
+    meta: TemplateMeta,
     data: T,
 }
 
-#[derive(Debug)]
-pub struct ErrorTemplate(pub crate::Error);
-
-pub type ResultTemplate<T> = Result<Template<T>, ErrorTemplate>;
+#[derive(Clone, Debug)]
+pub struct TemplateMeta {
+    name: Cow<'static, str>,
+}
 
 impl<T> Template<T> {
+    #[allow(unused)]
     pub fn new<N>(name: N, data: T) -> Self
     where
         N: Into<Cow<'static, str>>,
     {
-        Self {
-            name: name.into(),
-            data,
-        }
+        let meta = TemplateMeta::new(name);
+        Self::with_meta(meta, data)
+    }
+
+    pub fn with_meta(meta: TemplateMeta, data: T) -> Self {
+        Self { meta, data }
+    }
+}
+
+impl Template<crate::Error> {
+    pub fn error(error: crate::Error) -> Self {
+        let meta = TemplateMeta::error();
+        Self::with_meta(meta, error)
+    }
+}
+
+impl TemplateMeta {
+    pub fn new<N>(name: N) -> Self
+    where
+        N: Into<Cow<'static, str>>,
+    {
+        let name = name.into();
+        Self { name }
+    }
+
+    pub fn error() -> Self {
+        Self::new("error.html")
     }
 }
 
@@ -60,7 +82,7 @@ where
     let context =
         tera::Context::from_serialize(template.data).context("serialize template context")?;
     let html = renderer
-        .render(&template.name, &context)
+        .render(&template.meta.name, &context)
         .context("render template")?;
     Ok(Html(html))
 }
@@ -77,17 +99,23 @@ where
     T: Serialize + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        render_template(self).map_err(ErrorTemplate).into_response()
+        render_template(self)
+            .map_err(Template::error)
+            .into_response()
     }
 }
 
-impl IntoResponse for ErrorTemplate {
+// separate implementation is needed to ensure no recursion
+// don't try to be smarter
+impl IntoResponse for Template<crate::Error> {
     fn into_response(self) -> Response {
-        let error = ErrorResponse::new(&self.0);
-        let template = Template::new("error.html", error.message);
-        // TODO when catch panic ensure no recursion
-        // using Template as IntoResponse here would result in recursion
-        let html = render_template(template).expect("render error template");
-        (error.status_code, html).into_response()
+        let into_template = |msg| {
+            let t = Template {
+                meta: self.meta,
+                data: msg,
+            };
+            render_template(t).expect("render error template")
+        };
+        error_response(&self.data, into_template)
     }
 }

@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 
 use anyhow::Context;
 use axum::{extract::Query, routing::get, Router};
-use middleware::view::{render_view, ErrorView, ResultView, View};
+use middleware::view::{render_view, ResultView, View};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
@@ -32,8 +32,12 @@ fn router() -> Router {
         .layer(axum::middleware::from_fn(render_view))
 }
 
-#[tracing::instrument(level = "trace", ret(level = "debug"))]
-async fn index(Query(mut idx): Query<Index>) -> View<Index> {
+#[tracing::instrument(level = "trace", ret(level = "debug"), err(Debug))]
+async fn index(Query(mut idx): Query<Index>) -> ResultView<Index> {
     idx.name.get_or_insert_with(|| "World".into());
-    View::new("index.html", idx)
+    // suppress unused
+    let idx: crate::Result<Index> = Ok(idx);
+    let idx = idx.map_err(View::error)?;
+    let view = View::new("index.html", idx);
+    Ok(view)
 }

@@ -9,21 +9,18 @@ use axum::{
 use serde::Serialize;
 
 use super::{
-    error::ErrorResponse,
+    error::error_response,
     response_type::{LazyResponseType, ResponseType},
-    template::{Template, ERROR_TEMPLATE},
+    template::{Template, TemplateMeta},
 };
 
 #[derive(Clone, Debug)]
 pub struct View<T> {
-    template_name: Cow<'static, str>,
+    template_meta: TemplateMeta,
     data: T,
 }
 
-#[derive(Debug)]
-pub struct ErrorView(pub crate::Error);
-
-pub type ResultView<T> = Result<View<T>, ErrorView>;
+pub type ResultView<T> = Result<View<T>, View<crate::Error>>;
 
 struct SealedData(Box<dyn erased_serde::Serialize + Send + Sync>);
 
@@ -32,9 +29,19 @@ impl<T> View<T> {
     where
         N: Into<Cow<'static, str>>,
     {
+        let template_meta = TemplateMeta::new(template_name);
         Self {
-            template_name: template_name.into(),
+            template_meta,
             data,
+        }
+    }
+}
+
+impl View<crate::Error> {
+    pub fn error(error: crate::Error) -> Self {
+        Self {
+            template_meta: TemplateMeta::error(),
+            data: error,
         }
     }
 }
@@ -44,13 +51,13 @@ pub async fn render_view(response_type: LazyResponseType, req: Request, next: Ne
     let Some(view) = response.extensions_mut().remove::<View<SealedData>>() else {
         return response;
     };
-    // parts can't contain content-type so no need to sanitize
-    // - only one IntoResponse can be contained in Response
-    // - SealedData is a private type
+    // parts can't contain *implicitly set* content-type so no need to sanitize
+    // - only one IntoResponse can be contained in Response and that's View
+    // - SealedData is a private type, hence can't be injected via Extension from outside
     let (parts, _) = response.into_parts();
     let response = match response_type.parse() {
         ResponseType::Json => Json(view.data.0).into_response(),
-        ResponseType::Html => Template::new(view.template_name, view.data.0).into_response(),
+        ResponseType::Html => Template::with_meta(view.template_meta, view.data.0).into_response(),
     };
     (parts, response).into_response()
 }
@@ -67,17 +74,19 @@ where
 {
     fn into_response(self) -> Response {
         let view = View {
-            template_name: self.template_name,
+            template_meta: self.template_meta,
             data: SealedData(Box::new(self.data)),
         };
         Extension(view).into_response()
     }
 }
 
-impl IntoResponse for ErrorView {
+impl IntoResponse for View<crate::Error> {
     fn into_response(self) -> Response {
-        let error = ErrorResponse::new(&self.0);
-        let view = View::new(ERROR_TEMPLATE, error.message);
-        (error.status_code, view).into_response()
+        let into_view = |msg| View {
+            template_meta: self.template_meta,
+            data: msg,
+        };
+        error_response(&self.data, into_view)
     }
 }
