@@ -39,7 +39,7 @@ impl<T> View<T> {
     }
 }
 
-impl View<crate::Error> {
+impl ErrorView {
     pub fn error(error: crate::Error) -> Self {
         Self {
             template_meta: TemplateMeta::error(),
@@ -86,7 +86,7 @@ where
     }
 }
 
-impl IntoResponse for View<crate::Error> {
+impl IntoResponse for ErrorView {
     fn into_response(self) -> Response {
         let into_view = |msg| View {
             template_meta: self.template_meta,

@@ -30,6 +30,11 @@ pub struct Template<T> {
     data: T,
 }
 
+#[allow(unused)]
+pub type ResultTemplate<T> = Result<Template<T>, ErrorTemplate>;
+
+pub type ErrorTemplate = Template<crate::Error>;
+
 #[derive(Clone, Debug)]
 pub struct TemplateMeta {
     name: Cow<'static, str>,
@@ -50,7 +55,7 @@ impl<T> Template<T> {
     }
 }
 
-impl Template<crate::Error> {
+impl ErrorTemplate {
     pub fn error(error: crate::Error) -> Self {
         let meta = TemplateMeta::error();
         Self::with_meta(meta, error)
@@ -107,7 +112,7 @@ where
 
 // separate implementation is needed to ensure no recursion
 // don't try to be smarter
-impl IntoResponse for Template<crate::Error> {
+impl IntoResponse for ErrorTemplate {
     fn into_response(self) -> Response {
         let into_template = |msg| {
             let t = Template {

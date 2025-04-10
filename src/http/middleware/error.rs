@@ -11,10 +11,7 @@ pub struct ErrorMessage {
     error: String,
 }
 
-pub fn error_response<T>(
-    error: &crate::Error,
-    into_body: impl FnOnce(ErrorMessage) -> T,
-) -> Response
+pub fn error_response<T>(error: &Error, into_body: impl FnOnce(ErrorMessage) -> T) -> Response
 where
     T: IntoResponse,
 {
