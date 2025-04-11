@@ -11,7 +11,7 @@ use crate::Error;
 use super::view::{ErrorView, View};
 
 pub async fn handle_not_found() -> ErrorView {
-    #[tracing::instrument(level = "trace", ret(level = "warn"))]
+    #[tracing::instrument(ret(level = "warn"))]
     fn not_found() -> Error {
         Error::NotFound
     }
@@ -19,7 +19,7 @@ pub async fn handle_not_found() -> ErrorView {
 }
 
 pub fn handle_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
-    #[tracing::instrument(level = "trace", skip_all, ret(level = "error"))]
+    #[tracing::instrument(skip_all, ret(level = "error"))]
     fn catch_panic(panic_message: Box<dyn Any + Send + 'static>) -> Error {
         let error = if let Some(msg) = panic_message.downcast_ref::<String>() {
             anyhow!("{msg}")

@@ -10,7 +10,7 @@ use middleware::{
 };
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
-use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
+use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir, trace::TraceLayer};
 
 use crate::config::HttpConfig;
 
@@ -35,14 +35,18 @@ fn router() -> Router {
         .fallback(handle_not_found)
         .layer(CatchPanicLayer::custom(handle_panic))
         .layer(axum::middleware::from_fn(render_view))
+        .layer(TraceLayer::new_for_http())
 }
 
-#[tracing::instrument(level = "trace", ret(level = "debug"), err(Debug))]
-async fn index(Query(mut idx): Query<Index>) -> ResultView<Index> {
-    idx.name.get_or_insert_with(|| "World".into());
-    // suppress unused
-    let idx: crate::Result<Index> = Ok(idx);
-    let idx = idx.map_err(View::error)?;
+#[tracing::instrument(skip_all)]
+async fn index(Query(idx): Query<Index>) -> ResultView<Index> {
+    let idx = process_index(idx).map_err(View::error)?;
     let view = View::new("index.html", idx);
     Ok(view)
+}
+
+#[tracing::instrument(ret, err(Debug))]
+fn process_index(mut idx: Index) -> crate::Result<Index> {
+    idx.name.get_or_insert_with(|| "World".into());
+    Ok(idx)
 }

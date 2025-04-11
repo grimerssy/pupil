@@ -76,7 +76,7 @@ impl TemplateMeta {
     }
 }
 
-#[tracing::instrument(level = "trace", skip_all, err(Debug))]
+#[tracing::instrument(skip_all, err(Debug))]
 fn render_template<T>(template: Template<T>) -> crate::Result<Html<String>>
 where
     T: Serialize,
