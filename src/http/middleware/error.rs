@@ -10,6 +10,13 @@ use crate::Error;
 
 use super::view::{ErrorView, View};
 
+#[derive(Clone, Debug, thiserror::Error)]
+#[error("{body}")]
+pub struct ExtractionError {
+    pub(super) status: StatusCode,
+    pub(super) body: String,
+}
+
 pub async fn handle_not_found() -> ErrorView {
     #[tracing::instrument(ret(level = "warn"))]
     fn not_found() -> Error {
@@ -62,5 +69,6 @@ fn status_code(error: &Error) -> StatusCode {
     match error {
         Error::NotFound => StatusCode::NOT_FOUND,
         Error::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        Error::HttpExtraction(e) => e.status,
     }
 }

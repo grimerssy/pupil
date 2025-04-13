@@ -1,9 +1,13 @@
 use core::fmt;
 
+use crate::http::ExtractionError;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Requested resource was not found")]
     NotFound,
+    #[error(transparent)]
+    HttpExtraction(#[from] ExtractionError),
     #[error("An unexpected error occurred")]
     Internal(ErrorChain),
 }

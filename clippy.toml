@@ -1,0 +1,4 @@
+[[disallowed-types]]
+path = "axum::extract::Query"
+reason = "prefer custom extractor for better user-facing error messages"
+replacement = "pupil::http::middleware::query::Query"
