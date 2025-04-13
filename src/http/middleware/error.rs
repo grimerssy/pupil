@@ -2,6 +2,7 @@ use std::any::Any;
 
 use anyhow::anyhow;
 use axum::{
+    body::to_bytes,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
@@ -13,8 +14,41 @@ use super::view::{ErrorView, View};
 #[derive(Clone, Debug, thiserror::Error)]
 #[error("{body}")]
 pub struct ExtractionError {
-    pub(super) status: StatusCode,
-    pub(super) body: String,
+    status: StatusCode,
+    body: String,
+}
+
+impl ExtractionError {
+    /// # Panics
+    ///
+    /// Panics if IntoResponse doesn't uphold the same invariants as axum rejection types:
+    /// - reading the body is infallible
+    /// - body is a valid UTF-8 sequence
+    pub(super) async fn from_rejection(rejection: impl IntoResponse) -> Self {
+        Self::from_response(rejection.into_response())
+            .await
+            .expect("receive axum rejection")
+    }
+
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - reading the body fails
+    /// - reference to the body isn't exclusive
+    /// - body isn't a valid UTF-8
+    async fn from_response(response: Response) -> anyhow::Result<Self> {
+        let (parts, body) = response.into_parts();
+        let bytes = to_bytes(body, usize::MAX).await?;
+        let unique_bytes = bytes
+            .try_into_mut()
+            .map(Vec::from) // exclusive reference ensures zero copy conversion
+            .map_err(|_| anyhow!("non-exclusive reference to the body"))?;
+        let body_text = String::from_utf8(unique_bytes)?;
+        Ok(Self {
+            status: parts.status,
+            body: body_text,
+        })
+    }
 }
 
 pub async fn handle_not_found() -> ErrorView {
