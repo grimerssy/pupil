@@ -27,10 +27,7 @@ pub type ErrorView = View<crate::Error>;
 struct SealedData(Box<dyn erased_serde::Serialize + Send + Sync>);
 
 impl<T> View<T> {
-    pub fn new<N>(template_name: N, data: T) -> Self
-    where
-        N: Into<Cow<'static, str>>,
-    {
+    pub fn new(template_name: impl Into<Cow<'static, str>>, data: T) -> Self {
         let template_meta = TemplateMeta::new(template_name);
         Self {
             template_meta,

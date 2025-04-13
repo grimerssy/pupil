@@ -42,10 +42,7 @@ pub struct TemplateMeta {
 
 impl<T> Template<T> {
     #[allow(unused)]
-    pub fn new<N>(name: N, data: T) -> Self
-    where
-        N: Into<Cow<'static, str>>,
-    {
+    pub fn new(name: impl Into<Cow<'static, str>>, data: T) -> Self {
         let meta = TemplateMeta::new(name);
         Self::with_meta(meta, data)
     }
@@ -63,10 +60,7 @@ impl ErrorTemplate {
 }
 
 impl TemplateMeta {
-    pub fn new<N>(name: N) -> Self
-    where
-        N: Into<Cow<'static, str>>,
-    {
+    pub fn new(name: impl Into<Cow<'static, str>>) -> Self {
         let name = name.into();
         Self { name }
     }
