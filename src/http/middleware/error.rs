@@ -78,7 +78,7 @@ pub fn handle_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct ErrorMessage {
-    error: String,
+    errors: Vec<String>,
 }
 
 pub(super) fn error_response<T>(
@@ -88,11 +88,14 @@ pub(super) fn error_response<T>(
 where
     T: IntoResponse,
 {
-    let msg = ErrorMessage {
-        error: error.to_string(),
-    };
+    let msg = create_message(error);
     let body = into_body(msg).into_response();
     create_response(error, body)
+}
+
+fn create_message(error: &Error) -> ErrorMessage {
+    let errors = vec![error.to_string()];
+    ErrorMessage { errors }
 }
 
 fn create_response(error: &Error, body: Response) -> Response {
