@@ -7,6 +7,10 @@ use tera::Tera;
 
 use super::error::error_response;
 
+// TODO allocated renderer in app state
+// - use extensions like in view
+// - make a middleware layer with from_fn_with_state
+
 static TEMPLATES: &str = "templates/**/*.html";
 
 static RENDERER: OnceLock<Tera> = OnceLock::new();
@@ -30,9 +34,6 @@ pub struct Template<T> {
     data: T,
 }
 
-#[allow(unused)]
-pub type ResultTemplate<T> = Result<Template<T>, ErrorTemplate>;
-
 pub type ErrorTemplate = Template<crate::Error>;
 
 #[derive(Clone, Debug)]
@@ -41,12 +42,6 @@ pub struct TemplateMeta {
 }
 
 impl<T> Template<T> {
-    #[allow(unused)]
-    pub fn new(name: impl Into<Cow<'static, str>>, data: T) -> Self {
-        let meta = TemplateMeta::new(name);
-        Self::with_meta(meta, data)
-    }
-
     pub fn with_meta(meta: TemplateMeta, data: T) -> Self {
         Self { meta, data }
     }
