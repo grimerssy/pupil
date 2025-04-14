@@ -1,11 +1,6 @@
-#![allow(clippy::disallowed_types)]
-
 use std::convert::Infallible;
 
-use axum::{
-    extract::{FromRequestParts, Query as AxumQuery},
-    http::request::Parts,
-};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use serde::de::DeserializeOwned;
 
 use crate::http::ExtractionError;
@@ -18,6 +13,7 @@ impl<T> Query<T> {
     }
 }
 
+#[allow(clippy::disallowed_types)]
 impl<T, S> FromRequestParts<S> for Query<T>
 where
     T: DeserializeOwned + Send,
@@ -26,6 +22,7 @@ where
     type Rejection = Infallible;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        use axum::extract::Query as AxumQuery;
         let result = match AxumQuery::from_request_parts(parts, state).await {
             Ok(AxumQuery(value)) => Ok(value),
             Err(rejection) => Err(ExtractionError::from_rejection(rejection).await.into()),
