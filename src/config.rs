@@ -15,6 +15,8 @@ enum Environment {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub http: HttpConfig,
+    #[serde(flatten)]
+    pub app: AppConfig,
 }
 
 #[derive(Clone, Debug, Deserialize)]

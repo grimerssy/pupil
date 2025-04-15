@@ -15,10 +15,10 @@ use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir, trace::TraceL
 
 pub(crate) use middleware::error::ExtractionError;
 
-use crate::config::HttpConfig;
+use crate::{config::HttpConfig, context::AppContext};
 
-pub async fn serve(config: HttpConfig) -> anyhow::Result<()> {
-    let router = router();
+pub async fn serve(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
+    let router = router().with_state(ctx);
     let addr = SocketAddr::from((config.host, config.port));
     let listener = TcpListener::bind(addr).await?;
     axum::serve(listener, router.into_make_service())
@@ -31,7 +31,7 @@ struct Index {
     name: String,
 }
 
-fn router() -> Router {
+fn router() -> Router<AppContext> {
     Router::new()
         .nest_service("/static", ServeDir::new("dist"))
         .route("/", get(index))
