@@ -9,12 +9,15 @@
       ".editorconfig"
       ".envrc"
       ".direnv/*"
-      "Cargo.toml"
     ];
     programs.nixfmt.enable = true;
     programs.rustfmt.enable = true;
     programs.prettier.enable = true;
     programs.taplo.enable = true;
     programs.yamlfmt.enable = true;
+    settings.formatter.taplo.options = [
+      "--option"
+      "array_auto_expand=false"
+    ];
   };
 }
