@@ -1,32 +1,16 @@
-use std::{borrow::Cow, sync::OnceLock};
+use std::borrow::Cow;
 
-use anyhow::{anyhow, Context};
-use axum::response::{Html, IntoResponse, Response};
+use axum::{
+    extract::{Request, State},
+    middleware::Next,
+    response::{Html, IntoResponse, Response},
+    Extension,
+};
 use serde::Serialize;
-use tera::Tera;
+
+use crate::context::AppContext;
 
 use super::error::error_response;
-
-// TODO allocated renderer in app state
-// - use extensions like in view
-// - make a middleware layer with from_fn_with_state
-
-static TEMPLATES: &str = "templates/**/*.html";
-
-static RENDERER: OnceLock<Tera> = OnceLock::new();
-
-fn renderer() -> crate::Result<&'static Tera> {
-    match RENDERER.get() {
-        Some(r) => Ok(r),
-        None => {
-            let tera = Tera::new(TEMPLATES).context("parse templates")?;
-            RENDERER
-                .set(tera)
-                .map_err(|_| anyhow!("failed to set global renderer"))?;
-            renderer()
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Template<T> {
@@ -65,27 +49,45 @@ impl TemplateMeta {
     }
 }
 
-#[tracing::instrument(skip_all, err(Debug))]
-fn render_template<T>(template: Template<T>) -> crate::Result<Html<String>>
+struct Private<T>(T);
+
+type OpaqueData = Box<dyn erased_serde::Serialize + Send + Sync>;
+
+fn seal_data<T>(data: T) -> Private<OpaqueData>
 where
-    T: Serialize,
+    T: Serialize + Send + Sync + 'static,
 {
-    let renderer = renderer()?;
-    #[cfg(debug_assertions)]
-    let renderer = reload_templates(renderer)?;
-    let context =
-        tera::Context::from_serialize(template.data).context("serialize template context")?;
-    let html = renderer
-        .render(&template.meta.name, &context)
-        .context("render template")?;
-    Ok(Html(html))
+    Private(Box::new(data))
 }
 
-#[cfg(debug_assertions)]
-fn reload_templates(old: &'static Tera) -> crate::Result<Tera> {
-    let mut renderer = old.clone();
-    renderer.full_reload().context("reload templates")?;
-    Ok(renderer)
+pub async fn render_template(State(ctx): State<AppContext>, req: Request, next: Next) -> Response {
+    let mut response = next.run(req).await;
+    let Some(template) = response
+        .extensions_mut()
+        .remove::<Template<Private<OpaqueData>>>()
+    else {
+        return response;
+    };
+    let html = match ctx.render_template(&template.meta.name, template.data.0) {
+        Ok(html) => html,
+        Err(error) => {
+            response = Template::error(error).into_response();
+            let template = response
+                .extensions_mut()
+                .remove::<Template<Private<OpaqueData>>>()
+                .unwrap();
+            ctx.render_template(&template.meta.name, template.data.0)
+                .expect("render error template")
+        }
+    };
+    let (parts, _) = response.into_parts();
+    (parts, Html(html)).into_response()
+}
+
+impl Clone for Template<Private<OpaqueData>> {
+    fn clone(&self) -> Self {
+        unreachable!("a template body may not be cloned")
+    }
 }
 
 impl<T> IntoResponse for Template<T>
@@ -93,23 +95,14 @@ where
     T: Serialize + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        render_template(self)
-            .map_err(Template::error)
-            .into_response()
+        let template = Template::with_meta(self.meta, seal_data(self.data));
+        Extension(template).into_response()
     }
 }
 
-// separate implementation is needed to ensure no recursion
-// don't try to be smarter
 impl IntoResponse for ErrorTemplate {
     fn into_response(self) -> Response {
-        let into_template = |msg| {
-            let t = Template {
-                meta: self.meta,
-                data: msg,
-            };
-            render_template(t).expect("render error template")
-        };
+        let into_template = |msg| Template::with_meta(self.meta, msg);
         error_response(&self.data, into_template)
     }
 }

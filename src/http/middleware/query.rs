@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use axum::{extract::FromRequestParts, http::request::Parts};
 use serde::de::DeserializeOwned;
 
-use crate::http::ExtractionError;
+use super::error::ExtractionError;
 
 pub struct Query<T>(crate::Result<T>);
 

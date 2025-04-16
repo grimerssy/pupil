@@ -24,8 +24,6 @@ pub type ResultView<T> = Result<View<T>, ErrorView>;
 
 pub type ErrorView = View<crate::Error>;
 
-struct SealedData(Box<dyn erased_serde::Serialize + Send + Sync>);
-
 impl<T> View<T> {
     pub fn new(template_name: impl Into<Cow<'static, str>>, data: T) -> Self {
         let template_meta = TemplateMeta::new(template_name);
@@ -45,26 +43,28 @@ impl ErrorView {
     }
 }
 
+struct Private<T>(T);
+
+type OpaqueData = Box<dyn erased_serde::Serialize + Send + Sync>;
+
 pub async fn render_view(response_type: LazyResponseType, req: Request, next: Next) -> Response {
     let mut response = next.run(req).await;
-    let Some(view) = response.extensions_mut().remove::<View<SealedData>>() else {
+    let Some(view) = response
+        .extensions_mut()
+        .remove::<View<Private<OpaqueData>>>()
+    else {
         return response;
     };
-    let body = match response_type.parse() {
-        ResponseType::Json => Json(view.data.0).into_response(),
-        ResponseType::Html => Template::with_meta(view.template_meta, view.data.0).into_response(),
-    };
-    if !body.status().is_success() {
-        return body;
-    }
-    // parts can't contain *implicitly set* content-type so no need to sanitize
-    // - only one IntoResponse can be contained in Response and that's View
-    // - SealedData is a private type, hence can't be injected via Extension from outside
     let (parts, _) = response.into_parts();
-    (parts, body).into_response()
+    match response_type.parse() {
+        ResponseType::Json => (parts, Json(view.data.0)).into_response(),
+        ResponseType::Html => {
+            (parts, Template::with_meta(view.template_meta, view.data.0)).into_response()
+        }
+    }
 }
 
-impl Clone for View<SealedData> {
+impl Clone for View<Private<OpaqueData>> {
     fn clone(&self) -> Self {
         unreachable!("a view body may not be cloned")
     }
@@ -72,12 +72,13 @@ impl Clone for View<SealedData> {
 
 impl<T> IntoResponse for View<T>
 where
-    T: Serialize + Clone + Send + Sync + 'static,
+    T: Serialize + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
+        let opaque_data: OpaqueData = Box::new(self.data);
         let view = View {
             template_meta: self.template_meta,
-            data: SealedData(Box::new(self.data)),
+            data: Private(opaque_data),
         };
         Extension(view).into_response()
     }
