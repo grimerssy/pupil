@@ -32,10 +32,10 @@ struct Index {
     name: String,
 }
 
-fn router(state: AppContext) -> Router {
+fn router(ctx: AppContext) -> Router {
     let handle_panic = CatchPanicLayer::custom(handle_panic);
     let render_view = axum::middleware::from_fn(render_view);
-    let render_template = axum::middleware::from_fn_with_state(state.clone(), render_template);
+    let render_template = axum::middleware::from_fn_with_state(ctx.clone(), render_template);
     let trace = TraceLayer::new_for_http();
     Router::new()
         .nest_service("/static", ServeDir::new("dist"))
@@ -45,7 +45,7 @@ fn router(state: AppContext) -> Router {
         .layer(render_view)
         .layer(render_template)
         .layer(trace)
-        .with_state(state)
+        .with_state(ctx)
 }
 
 #[tracing::instrument(skip_all)]
