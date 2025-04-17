@@ -51,7 +51,7 @@ impl ExtractionError {
     }
 }
 
-pub async fn handle_not_found() -> ErrorView {
+pub(super) async fn handle_not_found() -> ErrorView {
     #[tracing::instrument(ret(level = "warn"))]
     fn not_found() -> Error {
         Error::NotFound
@@ -59,7 +59,7 @@ pub async fn handle_not_found() -> ErrorView {
     View::error(not_found())
 }
 
-pub fn handle_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
+pub(super) fn handle_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
     #[tracing::instrument(skip_all, ret(level = "error"))]
     fn catch_panic(panic_message: Box<dyn Any + Send + 'static>) -> Error {
         let error = if let Some(msg) = panic_message.downcast_ref::<String>() {

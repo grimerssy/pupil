@@ -60,7 +60,7 @@ where
     Private(Box::new(data))
 }
 
-pub async fn render_template(State(ctx): State<AppContext>, req: Request, next: Next) -> Response {
+pub(super) async fn render_template(State(ctx): State<AppContext>, req: Request, next: Next) -> Response {
     let mut response = next.run(req).await;
     let Some(template) = response
         .extensions_mut()
