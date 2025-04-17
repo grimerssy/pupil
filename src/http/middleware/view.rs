@@ -27,6 +27,10 @@ pub type ErrorView = View<crate::Error>;
 impl<T> View<T> {
     pub fn new(template_name: impl Into<Cow<'static, str>>, data: T) -> Self {
         let template_meta = TemplateMeta::new(template_name);
+        Self::with_meta(template_meta, data)
+    }
+
+    fn with_meta(template_meta: TemplateMeta, data: T) -> Self {
         Self {
             template_meta,
             data,
@@ -36,10 +40,7 @@ impl<T> View<T> {
 
 impl ErrorView {
     pub fn error(error: crate::Error) -> Self {
-        Self {
-            template_meta: TemplateMeta::error(),
-            data: error,
-        }
+        Self::with_meta(TemplateMeta::error(), error)
     }
 }
 
@@ -76,20 +77,14 @@ where
 {
     fn into_response(self) -> Response {
         let opaque_data: OpaqueData = Box::new(self.data);
-        let view = View {
-            template_meta: self.template_meta,
-            data: Private(opaque_data),
-        };
+        let view = View::with_meta(self.template_meta, Private(opaque_data));
         Extension(view).into_response()
     }
 }
 
 impl IntoResponse for ErrorView {
     fn into_response(self) -> Response {
-        let into_view = |msg| View {
-            template_meta: self.template_meta,
-            data: msg,
-        };
+        let into_view = |msg| View::with_meta(self.template_meta, msg);
         error_response(&self.data, into_view)
     }
 }
