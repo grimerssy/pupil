@@ -48,7 +48,11 @@ struct Private<T>(T);
 
 type OpaqueData = Box<dyn erased_serde::Serialize + Send + Sync>;
 
-pub(super) async fn render_view(response_type: LazyResponseType, req: Request, next: Next) -> Response {
+pub(super) async fn render_view(
+    response_type: LazyResponseType,
+    req: Request,
+    next: Next,
+) -> Response {
     let mut response = next.run(req).await;
     let Some(view) = response
         .extensions_mut()
