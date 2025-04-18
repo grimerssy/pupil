@@ -10,9 +10,9 @@ pub struct AppContext {
 }
 
 impl AppContext {
-    pub fn new(_config: AppConfig) -> anyhow::Result<Self> {
+    pub fn new(config: AppConfig) -> anyhow::Result<Self> {
         let ctx = Self {
-            template_renderer: TemplateRenderer::new()?,
+            template_renderer: TemplateRenderer::new(config.templates)?,
         };
         Ok(ctx)
     }

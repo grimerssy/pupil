@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use serde::Serialize;
 use tera::Tera;
 
-use super::AppContext;
+use crate::config::TemplateConfig;
 
-static TEMPLATES: &str = "templates/**/*.html";
+use super::AppContext;
 
 #[derive(Clone)]
 pub struct TemplateRenderer {
@@ -14,9 +14,12 @@ pub struct TemplateRenderer {
 }
 
 impl TemplateRenderer {
-    pub fn new() -> anyhow::Result<Self> {
-        let renderer = Tera::new(TEMPLATES)?;
-        let renderer = Arc::new(renderer);
+    pub fn new(config: TemplateConfig) -> anyhow::Result<Self> {
+        let templates = config
+            .path
+            .to_str()
+            .ok_or_else(|| anyhow!("template path contains invalid unicode"))?;
+        let renderer = Arc::new(Tera::new(templates)?);
         Ok(Self { renderer })
     }
 }

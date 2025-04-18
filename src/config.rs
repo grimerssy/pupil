@@ -20,7 +20,14 @@ pub struct Config {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct AppConfig {}
+pub struct AppConfig {
+    pub templates: TemplateConfig,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct TemplateConfig {
+    pub path: PathBuf,
+}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct HttpConfig {
