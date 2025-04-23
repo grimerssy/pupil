@@ -3,9 +3,8 @@ mod middleware;
 use std::net::SocketAddr;
 
 use anyhow::Context;
-use axum::{routing::get, Router};
+use axum::{extract::Query, routing::get, Router};
 use middleware::{
-    query::Query,
     view::{ResultView, View},
     RouterExt,
 };
@@ -14,8 +13,6 @@ use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
 use crate::{config::HttpConfig, context::AppContext};
-
-pub(crate) use middleware::error::ExtractionError;
 
 pub async fn serve(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
     let router = root().with_middleware(ctx.clone()).with_state(ctx);
@@ -28,7 +25,7 @@ pub async fn serve(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Index {
-    name: String,
+    name: Option<String>,
 }
 
 fn root() -> Router<AppContext> {
@@ -38,8 +35,7 @@ fn root() -> Router<AppContext> {
 }
 
 #[tracing::instrument(skip_all)]
-async fn index(idx: Query<Index>) -> ResultView<Index> {
-    let idx = idx.consume().map_err(View::error)?;
+async fn index(Query(idx): Query<Index>) -> ResultView<Index> {
     let view = View::new("index.html", idx);
     Ok(view)
 }
