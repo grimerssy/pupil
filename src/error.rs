@@ -1,27 +1,24 @@
 use core::fmt;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("Requested resource was not found")]
-    NotFound,
+pub enum Error<E>
+where
+    E: std::error::Error,
+{
+    #[error(transparent)]
+    Domain(E),
     #[error("An unexpected error occurred")]
-    Internal(ErrorChain),
-}
-
-impl From<anyhow::Error> for Error {
-    fn from(error: anyhow::Error) -> Self {
-        Self::Internal(ErrorChain(error))
-    }
+    Unexpected(InternalError),
 }
 
 #[derive(thiserror::Error)]
 #[error(transparent)]
-pub struct ErrorChain(#[from] anyhow::Error);
+pub struct InternalError(#[from] anyhow::Error);
 
-impl fmt::Debug for ErrorChain {
+impl fmt::Debug for InternalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{self}")?;
-        std::iter::successors(self.0.source(), |err| err.source())
-            .try_for_each(|err| write!(f, ": {err}"))
+        core::iter::successors(self.0.source(), |src| src.source())
+            .try_for_each(|src| write!(f, ": {src}"))
     }
 }

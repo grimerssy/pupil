@@ -8,8 +8,10 @@ use axum::{
 };
 use serde::Serialize;
 
+use crate::error::Error;
+
 use super::{
-    error::error_response,
+    error::{error_response, HttpError},
     response_type::{LazyResponseType, ResponseType},
     template::{Template, TemplateMeta},
 };
@@ -20,9 +22,9 @@ pub struct View<T> {
     data: T,
 }
 
-pub type ResultView<T> = Result<View<T>, ErrorView>;
+pub type ResultView<T, E> = Result<View<T>, ErrorView<E>>;
 
-pub type ErrorView = View<crate::Error>;
+pub type ErrorView<E> = View<Error<E>>;
 
 impl<T> View<T> {
     pub fn new(template_name: impl Into<Cow<'static, str>>, data: T) -> Self {
@@ -30,17 +32,16 @@ impl<T> View<T> {
         Self::with_meta(template_meta, data)
     }
 
+    pub fn error(error: T) -> Self {
+        let template_meta = TemplateMeta::error();
+        Self::with_meta(template_meta, error)
+    }
+
     fn with_meta(template_meta: TemplateMeta, data: T) -> Self {
         Self {
             template_meta,
             data,
         }
-    }
-}
-
-impl ErrorView {
-    pub fn error(error: crate::Error) -> Self {
-        Self::with_meta(TemplateMeta::error(), error)
     }
 }
 
@@ -86,7 +87,10 @@ where
     }
 }
 
-impl IntoResponse for ErrorView {
+impl<E> IntoResponse for ErrorView<E>
+where
+    E: HttpError,
+{
     fn into_response(self) -> Response {
         let into_view = |msg| View::with_meta(self.template_meta, msg);
         error_response(&self.data, into_view)

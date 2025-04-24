@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, convert::Infallible};
 
 use axum::{
     extract::{Request, State},
@@ -8,9 +8,9 @@ use axum::{
 };
 use serde::Serialize;
 
-use crate::context::AppContext;
+use crate::{context::AppContext, error::Error};
 
-use super::error::error_response;
+use super::error::{error_response, HttpError};
 
 #[derive(Clone, Debug)]
 pub struct Template<T> {
@@ -18,7 +18,7 @@ pub struct Template<T> {
     data: T,
 }
 
-pub type ErrorTemplate = Template<crate::Error>;
+pub type ErrorTemplate<E> = Template<Error<E>>;
 
 #[derive(Clone, Debug)]
 pub struct TemplateMeta {
@@ -26,15 +26,13 @@ pub struct TemplateMeta {
 }
 
 impl<T> Template<T> {
-    pub fn with_meta(meta: TemplateMeta, data: T) -> Self {
-        Self { meta, data }
-    }
-}
-
-impl ErrorTemplate {
-    pub fn error(error: crate::Error) -> Self {
+    pub fn error(error: T) -> Self {
         let meta = TemplateMeta::error();
         Self::with_meta(meta, error)
+    }
+
+    pub fn with_meta(meta: TemplateMeta, data: T) -> Self {
+        Self { meta, data }
     }
 }
 
@@ -75,6 +73,7 @@ pub(super) async fn render_template(
     let html = match ctx.render_template(&template.meta.name, template.data.0) {
         Ok(html) => html,
         Err(error) => {
+            let error = Error::<Infallible>::Unexpected(error);
             response = Template::error(error).into_response();
             let template = response
                 .extensions_mut()
@@ -104,7 +103,10 @@ where
     }
 }
 
-impl IntoResponse for ErrorTemplate {
+impl<E> IntoResponse for ErrorTemplate<E>
+where
+    E: HttpError,
+{
     fn into_response(self) -> Response {
         let into_template = |msg| Template::with_meta(self.meta, msg);
         error_response(&self.data, into_template)

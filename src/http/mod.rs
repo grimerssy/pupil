@@ -1,6 +1,6 @@
 mod middleware;
 
-use std::net::SocketAddr;
+use std::{convert::Infallible, net::SocketAddr};
 
 use anyhow::Context;
 use axum::{extract::Query, routing::get, Router};
@@ -35,7 +35,7 @@ fn root() -> Router<AppContext> {
 }
 
 #[tracing::instrument(skip_all)]
-async fn index(Query(idx): Query<Index>) -> ResultView<Index> {
+async fn index(Query(idx): Query<Index>) -> ResultView<Index, Infallible> {
     let view = View::new("index.html", idx);
     Ok(view)
 }

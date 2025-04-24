@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context};
 use serde::Serialize;
 use tera::Tera;
 
-use crate::config::TemplateConfig;
+use crate::{config::TemplateConfig, error::InternalError};
 
 use super::AppContext;
 
@@ -26,7 +26,7 @@ impl TemplateRenderer {
 
 impl AppContext {
     #[tracing::instrument(skip_all, err(Debug))]
-    pub(crate) fn render_template<T>(&self, template_name: &str, data: T) -> crate::Result<String>
+    pub(crate) fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
     where
         T: Serialize,
     {
@@ -42,7 +42,7 @@ impl AppContext {
 }
 
 #[cfg(debug_assertions)]
-fn reload_templates(renderer: &Tera) -> crate::Result<Tera> {
+fn reload_templates(renderer: &Tera) -> Result<Tera, InternalError> {
     let mut renderer = renderer.clone();
     renderer.full_reload().context("reload templates")?;
     Ok(renderer)
