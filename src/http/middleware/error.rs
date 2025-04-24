@@ -16,18 +16,18 @@ pub trait HttpError: std::error::Error {
 
 #[derive(Debug, thiserror::Error)]
 #[error("Requested resourse was not found")]
-pub(super) struct NotFoundError;
+pub(super) struct RouteNotFound;
 
-impl HttpError for NotFoundError {
+impl HttpError for RouteNotFound {
     fn status_code(&self) -> StatusCode {
         StatusCode::NOT_FOUND
     }
 }
 
-pub(super) async fn handle_not_found() -> ErrorView<NotFoundError> {
+pub(super) async fn handle_not_found() -> ErrorView<RouteNotFound> {
     #[tracing::instrument(ret(level = "warn"))]
-    fn not_found() -> NotFoundError {
-        NotFoundError
+    fn not_found() -> RouteNotFound {
+        RouteNotFound
     }
     let error = Error::Domain(not_found());
     View::error(error)
