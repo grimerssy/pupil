@@ -2,8 +2,9 @@ use std::{path::PathBuf, str::FromStr};
 
 use anyhow::Context;
 use serde::Deserialize;
-use serde_aux::field_attributes::deserialize_number_from_string;
 use strum::{Display, EnumString, VariantNames};
+
+use crate::{context::AppConfig, http::HttpConfig};
 
 #[derive(Clone, Copy, Debug, Display, EnumString, VariantNames)]
 #[strum(serialize_all = "lowercase")]
@@ -17,23 +18,6 @@ pub struct Config {
     pub http: HttpConfig,
     #[serde(flatten)]
     pub app: AppConfig,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct AppConfig {
-    pub templates: TemplateConfig,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct TemplateConfig {
-    pub path: PathBuf,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct HttpConfig {
-    pub host: [u8; 4],
-    #[serde(deserialize_with = "deserialize_number_from_string")]
-    pub port: u16,
 }
 
 impl Config {

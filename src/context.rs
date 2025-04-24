@@ -1,12 +1,15 @@
-mod template;
+use serde::Deserialize;
 
-use template::TemplateRenderer;
+use crate::template::{TemplateConfig, TemplateRenderer};
 
-use crate::config::AppConfig;
+#[derive(Clone, Debug, Deserialize)]
+pub struct AppConfig {
+    pub templates: TemplateConfig,
+}
 
 #[derive(Clone)]
 pub struct AppContext {
-    template_renderer: TemplateRenderer,
+    pub template_renderer: TemplateRenderer,
 }
 
 impl AppContext {

@@ -9,10 +9,18 @@ use middleware::{
     RouterExt,
 };
 use serde::{Deserialize, Serialize};
+use serde_aux::field_attributes::deserialize_number_from_string;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
-use crate::{config::HttpConfig, context::AppContext};
+use crate::context::AppContext;
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct HttpConfig {
+    pub host: [u8; 4],
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
+}
 
 pub async fn serve(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
     let router = root().with_middleware(ctx.clone()).with_state(ctx);
