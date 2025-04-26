@@ -17,17 +17,18 @@ pub struct TemplateRenderer {
 }
 
 impl TemplateRenderer {
-    pub fn new(config: TemplateConfig) -> anyhow::Result<Self> {
+    pub fn new(config: TemplateConfig) -> Result<Self, InternalError> {
         let templates = config
             .path
             .to_str()
             .ok_or_else(|| anyhow!("template path contains invalid unicode"))?;
-        let renderer = Arc::new(Tera::new(templates)?);
+        let tera = Tera::new(templates).context("construct tera renderer")?;
+        let renderer = Arc::new(tera);
         Ok(Self { renderer })
     }
 }
 
-pub fn render_template_with<T>(
+pub fn render_template<T>(
     ctx: &AppContext,
     template_name: &str,
     data: T,
@@ -35,11 +36,11 @@ pub fn render_template_with<T>(
 where
     T: Serialize,
 {
-    render_template(&ctx.template_renderer.renderer, template_name, data)
+    render_template_with(&ctx.template_renderer.renderer, template_name, data)
 }
 
 #[tracing::instrument(skip(renderer, data), err(Debug))]
-fn render_template<T>(
+fn render_template_with<T>(
     renderer: &Tera,
     template_name: &str,
     data: T,

@@ -8,7 +8,7 @@ use axum::{
 };
 use serde::Serialize;
 
-use crate::{context::AppContext, error::Error, template::render_template_with};
+use crate::{context::AppContext, error::Error, template::render_template};
 
 use super::error::{error_response, HttpError};
 
@@ -58,7 +58,7 @@ where
     Private(Box::new(data))
 }
 
-pub(super) async fn render_template(
+pub(super) async fn handle_render_template(
     State(ctx): State<AppContext>,
     req: Request,
     next: Next,
@@ -70,7 +70,7 @@ pub(super) async fn render_template(
     else {
         return response;
     };
-    let html = match render_template_with(&ctx, &template.meta.name, template.data.0) {
+    let html = match render_template(&ctx, &template.meta.name, template.data.0) {
         Ok(html) => html,
         Err(error) => {
             let error = Error::<Infallible>::Unexpected(error);
@@ -79,7 +79,7 @@ pub(super) async fn render_template(
                 .extensions_mut()
                 .remove::<Template<Private<OpaqueData>>>()
                 .unwrap();
-            render_template_with(&ctx, &template.meta.name, template.data.0)
+            render_template(&ctx, &template.meta.name, template.data.0)
                 .expect("render error template")
         }
     };

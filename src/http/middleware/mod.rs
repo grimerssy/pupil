@@ -5,9 +5,9 @@ pub mod view;
 
 use axum::{middleware, Router};
 use error::{handle_not_found, handle_panic};
-use template::render_template;
+use template::handle_render_template;
 use tower_http::{catch_panic::CatchPanicLayer, trace::TraceLayer};
-use view::render_view;
+use view::handle_render_view;
 
 use crate::context::AppContext;
 
@@ -22,8 +22,8 @@ where
     fn with_middleware(self, ctx: AppContext) -> Self {
         self.fallback(handle_not_found)
             .layer(CatchPanicLayer::custom(handle_panic))
-            .layer(middleware::from_fn(render_view))
-            .layer(middleware::from_fn_with_state(ctx, render_template))
+            .layer(middleware::from_fn(handle_render_view))
+            .layer(middleware::from_fn_with_state(ctx, handle_render_template))
             .layer(TraceLayer::new_for_http())
     }
 }

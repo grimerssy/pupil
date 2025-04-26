@@ -26,7 +26,7 @@ impl fmt::Debug for InternalError {
 struct ErrorChain<'a>(&'a anyhow::Error);
 
 impl fmt::Debug for ErrorChain<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let error = self.0;
         write!(f, "{error}")?;
         core::iter::successors(error.source(), |src| src.source())

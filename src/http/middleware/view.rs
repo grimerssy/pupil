@@ -49,7 +49,7 @@ struct Private<T>(T);
 
 type OpaqueData = Box<dyn erased_serde::Serialize + Send + Sync>;
 
-pub(super) async fn render_view(
+pub(super) async fn handle_render_view(
     response_type: LazyResponseType,
     req: Request,
     next: Next,
