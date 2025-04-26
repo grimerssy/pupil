@@ -1,6 +1,12 @@
 http:
   host: [127, 0, 0, 1]
   port: 8080
-
 templates:
   path: "templates/**/*.html"
+database:
+  host: 127.0.0.1
+  port: 5432
+  user: postgres
+  password: postgres
+  database: postgres
+  require_ssl: false

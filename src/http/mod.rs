@@ -3,7 +3,11 @@ mod middleware;
 use std::{convert::Infallible, net::SocketAddr};
 
 use anyhow::Context;
-use axum::{extract::Query, routing::get, Router};
+use axum::{
+    extract::{Query, State},
+    routing::get,
+    Router,
+};
 use middleware::{
     view::{ResultView, View},
     RouterExt,
@@ -13,7 +17,7 @@ use serde_aux::field_attributes::deserialize_number_from_string;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
-use crate::context::AppContext;
+use crate::{context::AppContext, database::fetch_name, error::Error};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct HttpConfig {
@@ -43,7 +47,15 @@ fn root() -> Router<AppContext> {
 }
 
 #[tracing::instrument(skip_all)]
-async fn index(Query(idx): Query<Index>) -> ResultView<Index, Infallible> {
+async fn index(
+    State(ctx): State<AppContext>,
+    Query(idx): Query<Index>,
+) -> ResultView<Index, Infallible> {
+    let name = fetch_name(ctx, idx.name.as_deref().unwrap_or("World"))
+        .await
+        .map_err(Error::Unexpected)
+        .map_err(View::error)?;
+    let idx = Index { name: Some(name) };
     let view = View::new("index.html", idx);
     Ok(view)
 }

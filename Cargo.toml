@@ -20,6 +20,9 @@ tower-http = { version = "0.6.2", features = ["fs", "catch-panic", "trace"] }
 
 tera = "1.20.0"
 
+sqlx = { version = "0.8.5", default-features = false, features = ["derive", "runtime-tokio-rustls", "postgres"] }
+
 config = "0.15.11"
 strum = { version = "0.27.1", features = ["derive"] }
 serde-aux = "4.6.0"
+secrecy = { version = "0.10.3", features = ["serde"] }

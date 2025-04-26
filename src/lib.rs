@@ -3,5 +3,6 @@ pub mod context;
 pub mod http;
 pub mod telemetry;
 
+mod database;
 mod error;
 mod template;
