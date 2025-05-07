@@ -18,14 +18,13 @@ where
     T: Clone + core::fmt::Debug,
     SignupData: TryFrom<T, Error = ConversionFailure<T>>,
 {
-    let signup = || async {
+    log_result!(async {
         let signup_data = SignupData::try_from(form.clone()).map_err(AppError::from)?;
         signup_with(ctx)(signup_data)
             .await
             .map_err(AppErrorKind::Logical)
             .map_err(|error| error.with_input(form))
-    };
-    log_result!(signup().await)
+    })
 }
 
 pub fn signup_with(ctx: &AppContext) -> impl Signup {

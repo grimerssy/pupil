@@ -64,6 +64,16 @@ mod macros {
     }
 
     macro_rules! log_result {
+        (async $result:block) => {{
+            #[allow(clippy::redundant_closure_call)]
+            let result = (async || { $result })().await;
+            $crate::app::error::log_result!(result)
+        }};
+        ($result:block) => {{
+            #[allow(clippy::redundant_closure_call)]
+            let result = (|| { $result })();
+            $crate::app::error::log_result!(result)
+        }};
         ($result:expr) => {{
             let result = $result;
             match &result {
