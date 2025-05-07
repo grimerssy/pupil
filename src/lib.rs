@@ -1,8 +1,8 @@
-pub mod config;
-pub mod context;
-pub mod http;
-pub mod telemetry;
+pub use {config::Config, context::AppContext, http::serve_http, telemetry::init_telemetry};
 
-mod database;
-mod error;
-mod template;
+mod app;
+mod config;
+mod context;
+mod domain;
+mod http;
+mod telemetry;

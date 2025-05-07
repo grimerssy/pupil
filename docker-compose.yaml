@@ -6,3 +6,18 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       PGUSER: postgres
+      POSTGRES_DB: atlas-dev
+  atlas:
+    image: arigaio/atlas:latest-alpine
+    depends_on:
+      - postgres
+    profiles:
+      - atlas
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      DEV_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/atlas-dev?sslmode=disable
+    volumes:
+      - ./atlas.hcl:/db/atlas.hcl:ro
+      - ./schema.sql:/db/schema.sql:ro
+      - ./migrations:/db/migrations
+    working_dir: /db

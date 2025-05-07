@@ -1,0 +1,79 @@
+use axum::{
+    extract::State,
+    http::StatusCode,
+    response::Redirect,
+    routing::{get, post},
+    Form, Router,
+};
+use secrecy::SecretString;
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    app::{
+        auth::todo_rename_signup,
+        validation::{try_convert, ConversionFailure},
+    },
+    domain::auth::{SaveNewUserError, SignupData, SignupError},
+    AppContext,
+};
+
+use super::{
+    error::HttpError,
+    middleware::template::{ErrorTemplate, SuccessTemplate, Template},
+    response::HttpResponse,
+    serialize_secret,
+};
+
+const SIGNUP_PAGE: &str = "signup.html";
+
+pub fn auth_routes() -> Router<AppContext> {
+    let signup = Router::new()
+        .route("/", get(singup_page))
+        .route("/", post(handle_signup));
+    Router::new().nest("/signup", signup)
+}
+
+pub async fn singup_page() -> SuccessTemplate<()> {
+    Template::new(SIGNUP_PAGE, HttpResponse::success(()))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SignupForm {
+    email: String,
+    #[serde(serialize_with = "serialize_secret")]
+    password: SecretString,
+    name: String,
+}
+
+impl HttpError for SignupError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            Self::HashPassword(error) => match *error {},
+            Self::SaveUser(error) => match error {
+                SaveNewUserError::EmailTaken => StatusCode::CONFLICT,
+            },
+        }
+    }
+}
+
+pub async fn handle_signup(
+    State(ctx): State<AppContext>,
+    Form(signup_form): Form<SignupForm>,
+) -> Result<Redirect, ErrorTemplate<SignupForm, SignupError>> {
+    todo_rename_signup(&ctx, signup_form)
+        .await
+        .map(|_| Redirect::to("/"))
+        .map_err(|error| Template::new(SIGNUP_PAGE, error))
+}
+
+impl TryFrom<SignupForm> for SignupData {
+    type Error = ConversionFailure<SignupForm>;
+
+    fn try_from(value: SignupForm) -> Result<Self, Self::Error> {
+        try_convert!(SignupForm value => SignupData {
+            email,
+            password,
+            name
+        })
+    }
+}

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::Infallible};
+use std::borrow::Cow;
 
 use axum::{
     extract::{Request, State},
@@ -7,10 +7,21 @@ use axum::{
     Extension,
 };
 use serde::Serialize;
+use trait_set::trait_set;
 
-use crate::{context::AppContext, error::Error, template::render_template};
+use crate::{
+    app::error::AppError,
+    context::{template::render_template_with, AppContext},
+    domain::error::InternalError,
+    http::{
+        error::HttpError,
+        response::{HttpResponse, HttpResponseExtension, SuccessHttpResponse},
+    },
+};
 
-use super::error::{error_response, HttpError};
+trait_set! {
+    pub trait RenderTemplate<T: serde::Serialize> = Fn(&str, T) -> Result<String, InternalError>;
+}
 
 #[derive(Clone, Debug)]
 pub struct Template<T> {
@@ -18,14 +29,23 @@ pub struct Template<T> {
     data: T,
 }
 
-pub type ErrorTemplate<E> = Template<Error<E>>;
+pub type SuccessTemplate<T> = Template<SuccessHttpResponse<T>>;
+
+pub type ErrorTemplate<I, E> = Template<AppError<I, E>>;
+
+pub(super) type TemplateName = Cow<'static, str>;
 
 #[derive(Clone, Debug)]
 pub struct TemplateMeta {
-    name: Cow<'static, str>,
+    name: TemplateName,
 }
 
 impl<T> Template<T> {
+    pub fn new(template_name: impl Into<TemplateName>, data: T) -> Self {
+        let template_meta = TemplateMeta::new(template_name);
+        Self::with_meta(template_meta, data)
+    }
+
     pub fn error(error: T) -> Self {
         let meta = TemplateMeta::error();
         Self::with_meta(meta, error)
@@ -37,7 +57,7 @@ impl<T> Template<T> {
 }
 
 impl TemplateMeta {
-    pub fn new(name: impl Into<Cow<'static, str>>) -> Self {
+    pub fn new(name: impl Into<TemplateName>) -> Self {
         let name = name.into();
         Self { name }
     }
@@ -45,17 +65,6 @@ impl TemplateMeta {
     pub fn error() -> Self {
         Self::new("error.html")
     }
-}
-
-struct Private<T>(T);
-
-type OpaqueData = Box<dyn erased_serde::Serialize + Send + Sync>;
-
-fn seal_data<T>(data: T) -> Private<OpaqueData>
-where
-    T: Serialize + Send + Sync + 'static,
-{
-    Private(Box::new(data))
 }
 
 pub(super) async fn handle_render_template(
@@ -66,49 +75,44 @@ pub(super) async fn handle_render_template(
     let mut response = next.run(req).await;
     let Some(template) = response
         .extensions_mut()
-        .remove::<Template<Private<OpaqueData>>>()
+        .remove::<Template<HttpResponseExtension>>()
     else {
         return response;
     };
-    let html = match render_template(&ctx, &template.meta.name, template.data.0) {
+    let render_template = render_template_with(&ctx);
+    let html = match render_template(&template.meta.name, template.data) {
         Ok(html) => html,
         Err(error) => {
-            let error = Error::<Infallible>::Unexpected(error);
             response = Template::error(error).into_response();
             let template = response
                 .extensions_mut()
-                .remove::<Template<Private<OpaqueData>>>()
+                .remove::<Template<HttpResponseExtension>>()
                 .unwrap();
-            render_template(&ctx, &template.meta.name, template.data.0)
-                .expect("render error template")
+            render_template(&template.meta.name, template.data).expect("render error template")
         }
     };
     let (parts, _) = response.into_parts();
     (parts, Html(html)).into_response()
 }
 
-impl Clone for Template<Private<OpaqueData>> {
-    fn clone(&self) -> Self {
-        unreachable!("a template body may not be cloned")
-    }
-}
-
-impl<T> IntoResponse for Template<T>
+impl<I, O, V> IntoResponse for Template<HttpResponse<I, O, V>>
 where
-    T: Serialize + Send + Sync + 'static,
+    I: Serialize + Send + Sync + 'static,
+    O: Serialize + Send + Sync + 'static,
+    V: Serialize + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        let template = Template::with_meta(self.meta, seal_data(self.data));
-        Extension(template).into_response()
+        let view = Template::with_meta(self.meta, self.data.erase_types());
+        Extension(view).into_response()
     }
 }
 
-impl<E> IntoResponse for ErrorTemplate<E>
+impl<E> IntoResponse for Template<E>
 where
     E: HttpError,
 {
     fn into_response(self) -> Response {
-        let into_template = |msg| Template::with_meta(self.meta, msg);
-        error_response(&self.data, into_template)
+        self.data
+            .with_body(|response| Template::with_meta(self.meta, response))
     }
 }

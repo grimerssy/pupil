@@ -10,3 +10,9 @@ database:
   password: ""
   database: ""
   require_ssl: true
+hasher:
+  secret: ""
+  memory_size: 4096
+  iterations: 3
+  parallelism_factor: 1
+  output_length: 32

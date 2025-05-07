@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "components/form.html" as form %}
+
+{% block content %}
+  <form action="/auth/signup" method="POST">
+    <fieldset
+      class="fieldset bg-base-200 border-base-300 rounded-box w-md gap-5 border p-4"
+    >
+      <legend class="fieldset-legend text-lg">Signup</legend>
+      {{ form::input(context=context, field="name", label="Name") }}
+      {{ form::input(context=context, field="email", label="Email") }}
+      {{ form::input(context=context, field="password", label="Password", type="password") }}
+      <input
+        type="submit"
+        value="Signup"
+        class="btn btn-soft btn-primary mt-4"
+      />
+      {{ form::submission_error(context=context) }}
+    </fieldset>
+  </form>
+{% endblock content %}

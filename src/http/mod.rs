@@ -1,23 +1,28 @@
-mod middleware;
+use auth::auth_routes;
+pub use middleware::template::RenderTemplate;
+use response::HttpResponse;
+use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
 
-use std::{convert::Infallible, net::SocketAddr};
+use std::net::SocketAddr;
 
 use anyhow::Context;
-use axum::{
-    extract::{Query, State},
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 use middleware::{
-    view::{ResultView, View},
+    template::{SuccessTemplate, Template},
     RouterExt,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
-use crate::{context::AppContext, database::fetch_name, error::Error};
+use crate::context::AppContext;
+
+mod error;
+mod middleware;
+mod response;
+
+mod auth;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct HttpConfig {
@@ -26,8 +31,8 @@ pub struct HttpConfig {
     pub port: u16,
 }
 
-pub async fn serve(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
-    let router = root().with_middleware(ctx.clone()).with_state(ctx);
+pub async fn serve_http(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
+    let router = root_routes().with_middleware(ctx.clone()).with_state(ctx);
     let addr = SocketAddr::from((config.host, config.port));
     let listener = TcpListener::bind(addr).await?;
     axum::serve(listener, router.into_make_service())
@@ -35,27 +40,21 @@ pub async fn serve(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
         .context("start http server")
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct Index {
-    name: Option<String>,
-}
-
-fn root() -> Router<AppContext> {
+fn root_routes() -> Router<AppContext> {
     Router::new()
         .route("/", get(index))
         .nest_service("/static", ServeDir::new("dist"))
+        .nest("/auth", auth_routes())
 }
 
-#[tracing::instrument(skip_all)]
-async fn index(
-    State(ctx): State<AppContext>,
-    Query(idx): Query<Index>,
-) -> ResultView<Index, Infallible> {
-    let name = fetch_name(ctx, idx.name.as_deref().unwrap_or("World"))
-        .await
-        .map_err(Error::Unexpected)
-        .map_err(View::error)?;
-    let idx = Index { name: Some(name) };
-    let view = View::new("index.html", idx);
-    Ok(view)
+async fn index() -> SuccessTemplate<()> {
+    Template::new("index.html", HttpResponse::success(()))
+}
+
+fn serialize_secret<T, S>(secret: &SecretBox<T>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    T: Serialize + Zeroize + ?Sized,
+    S: Serializer,
+{
+    secret.expose_secret().serialize(serializer)
 }

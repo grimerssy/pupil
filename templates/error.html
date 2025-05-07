@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="text-error flex flex-col gap-2 text-2xl font-semibold">
-    <span>{{ error }}</span>
-  </div>
+  {% if context.status == "error" %}
+    <span class="text-error text-2xl font-semibold">{{ context.message }}</span>
+  {% endif %}
 {% endblock content %}

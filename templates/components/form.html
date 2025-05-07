@@ -1,0 +1,27 @@
+{% macro input(context, field, label, type="text") %}
+  <div>
+    <label class="label">{{ label }}</label>
+    <input
+      name="{{ field }}"
+      type="{{ type }}"
+      {% if context.status != "success" %}
+        value="{{ context.input | get(key=field) }}"
+      {% endif %}
+      class="input w-full"
+      placeholder="{{ label }}"
+    />
+    {% if context.status == "fail" %}
+      <div class="grid">
+        {% for error in context.data | get(key=field, default=[]) %}
+          <span class="text-error">{{ error }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro submission_error(context) %}
+  {% if context.status == "error" %}
+    <span class="text-error">{{ context.message }}</span>
+  {% endif %}
+{% endmacro %}
