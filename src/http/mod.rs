@@ -2,6 +2,7 @@ use auth::auth_routes;
 pub use middleware::template::RenderTemplate;
 use response::HttpResponse;
 use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
+use static_files::static_router;
 
 use std::net::SocketAddr;
 
@@ -14,7 +15,6 @@ use middleware::{
 use serde::{Deserialize, Serialize, Serializer};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use tokio::net::TcpListener;
-use tower_http::services::ServeDir;
 
 use crate::context::AppContext;
 
@@ -23,6 +23,7 @@ mod middleware;
 mod response;
 
 mod auth;
+mod static_files;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct HttpConfig {
@@ -43,8 +44,8 @@ pub async fn serve_http(config: HttpConfig, ctx: AppContext) -> anyhow::Result<(
 fn root_routes() -> Router<AppContext> {
     Router::new()
         .route("/", get(index))
-        .nest_service("/static", ServeDir::new("dist"))
         .nest("/auth", auth_routes())
+        .merge(static_router())
 }
 
 async fn index() -> SuccessTemplate<()> {

@@ -9,6 +9,7 @@
       ".editorconfig"
       ".envrc"
       ".direnv/*"
+      "assets/*"
       "migrations/*"
     ];
     programs.nixfmt.enable = true;
