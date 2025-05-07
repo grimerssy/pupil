@@ -58,9 +58,9 @@ impl HttpError for SignupError {
 
 pub async fn handle_signup(
     State(ctx): State<AppContext>,
-    Form(signup_form): Form<SignupForm>,
+    Form(form): Form<SignupForm>,
 ) -> Result<Redirect, ErrorTemplate<SignupForm, SignupError>> {
-    todo_rename_signup(&ctx, signup_form)
+    todo_rename_signup(&ctx, form)
         .await
         .map(|_| Redirect::to("/"))
         .map_err(|error| Template::new(SIGNUP_PAGE, error))
