@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::anyhow;
+use educe::Educe;
 use email_address::EmailAddress;
 
 use crate::app::validation::{Validation, ValidationFailure};
@@ -9,7 +10,8 @@ const EMAIL: &str = "Email";
 
 const MAX_LENGTH: usize = 50;
 
-#[derive(Clone, Debug, sqlx::Type)]
+#[derive(Educe, Clone, Debug, sqlx::Type)]
+#[educe(Into(String))]
 #[sqlx(transparent)]
 pub struct Email(String);
 
@@ -25,11 +27,5 @@ impl TryFrom<String> for Email {
             )
             .finish()
             .map(Self)
-    }
-}
-
-impl From<Email> for String {
-    fn from(value: Email) -> Self {
-        value.0
     }
 }

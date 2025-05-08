@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use educe::Educe;
 
 use crate::app::validation::{Validation, ValidationFailure};
 
@@ -7,7 +8,8 @@ const NAME: &str = "Name";
 const MIN_LENGTH: usize = 2;
 const MAX_LENGTH: usize = 50;
 
-#[derive(Clone, Debug, sqlx::Type)]
+#[derive(Educe, Clone, Debug, sqlx::Type)]
+#[educe(Into(String))]
 #[sqlx(transparent)]
 pub struct Name(String);
 
@@ -32,11 +34,5 @@ impl TryFrom<String> for Name {
             )
             .finish()
             .map(Self)
-    }
-}
-
-impl From<Name> for String {
-    fn from(value: Name) -> Self {
-        value.0
     }
 }

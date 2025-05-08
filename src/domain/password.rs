@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use educe::Educe;
 use secrecy::{ExposeSecret, SecretString};
 use sqlx::{
     encode::IsNull, error::BoxDynError, postgres::PgArgumentBuffer, Database, Decode, Encode,
@@ -12,10 +13,12 @@ const PASSWORD: &str = "Password";
 const MIN_LENGTH: usize = 8;
 const MAX_LENGTH: usize = 32;
 
-#[derive(Clone, Debug)]
+#[derive(Educe, Clone, Debug)]
+#[educe(Into(SecretString))]
 pub struct Password(SecretString);
 
-#[derive(Clone, Debug)]
+#[derive(Educe, Clone, Debug)]
+#[educe(Into(SecretString))]
 pub struct PasswordHash(SecretString);
 
 impl TryFrom<SecretString> for Password {
@@ -55,12 +58,6 @@ impl TryFrom<SecretString> for Password {
 impl ExposeSecret<str> for Password {
     fn expose_secret(&self) -> &str {
         self.0.expose_secret()
-    }
-}
-
-impl From<Password> for SecretString {
-    fn from(value: Password) -> Self {
-        value.0
     }
 }
 
