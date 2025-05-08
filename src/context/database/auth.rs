@@ -8,12 +8,14 @@ use crate::{
 
 use super::{sql_error, Database};
 
-pub fn save_new_user_with(ctx: &AppContext) -> impl SaveNewUser {
-    async |new_user| save_new_user(&ctx.database, new_user).await
+impl SaveNewUser for &AppContext {
+    #[tracing::instrument(skip(self))]
+    async fn save_new_user(self, new_user: NewUser) -> DomainResult<(), SaveNewUserError> {
+        save_new_user_with(&self.database, new_user).await
+    }
 }
 
-#[tracing::instrument(skip(db))]
-async fn save_new_user(db: &Database, new_user: NewUser) -> DomainResult<(), SaveNewUserError> {
+async fn save_new_user_with(db: &Database, new_user: NewUser) -> DomainResult<(), SaveNewUserError> {
     match sqlx::query(
         "
         insert into users

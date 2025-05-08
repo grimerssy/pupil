@@ -1,18 +1,22 @@
 use thiserror::Error;
 
 use super::{
-    action::action,
     email::Email,
     error::DomainResult,
     name::Name,
     password::{Password, PasswordHash},
 };
 
-action! {
-    pub Signup = async (SignupData) -> DomainResult<(), SignupError>;
+pub trait Signup {
+    async fn signup(self, input: SignupData) -> DomainResult<(), SignupError>;
+}
 
-    pub HashPassword = (Password) -> DomainResult<PasswordHash, HashPasswordError>;
-    pub SaveNewUser = async (NewUser) -> DomainResult<(), SaveNewUserError>;
+pub trait HashPassword {
+    fn hash_password(self, input: Password) -> DomainResult<PasswordHash, HashPasswordError>;
+}
+
+pub trait SaveNewUser {
+    async fn save_new_user(self, input: NewUser) -> DomainResult<(), SaveNewUserError>;
 }
 
 #[derive(Debug, Clone)]

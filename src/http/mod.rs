@@ -1,5 +1,6 @@
-use auth::auth_routes;
 pub use middleware::template::RenderTemplate;
+
+use auth::auth_routes;
 use response::HttpResponse;
 use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
 use static_files::static_router;

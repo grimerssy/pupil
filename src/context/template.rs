@@ -29,15 +29,17 @@ impl TemplateRenderer {
     }
 }
 
-pub fn render_template_with<T>(ctx: &AppContext) -> impl RenderTemplate<T>
-where
-    T: Serialize,
-{
-    |template_name, data| render_template(&ctx.template_renderer, template_name, data)
+impl RenderTemplate for &AppContext {
+    #[tracing::instrument(skip(self, data), err(Debug))]
+    fn render_template<T>(self, template_name: &str, data: T) -> Result<String, InternalError>
+    where
+        T: Serialize,
+    {
+        render_template_with(&self.template_renderer, template_name, data)
+    }
 }
 
-#[tracing::instrument(skip(renderer, data), err(Debug))]
-fn render_template<T>(
+fn render_template_with<T>(
     renderer: &TemplateRenderer,
     template_name: &str,
     data: T,

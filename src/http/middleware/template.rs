@@ -7,11 +7,10 @@ use axum::{
     Extension,
 };
 use serde::Serialize;
-use trait_set::trait_set;
 
 use crate::{
     app::error::AppError,
-    context::{template::render_template_with, AppContext},
+    context::AppContext,
     domain::error::InternalError,
     http::{
         error::HttpError,
@@ -19,8 +18,10 @@ use crate::{
     },
 };
 
-trait_set! {
-    pub trait RenderTemplate<T: serde::Serialize> = Fn(&str, T) -> Result<String, InternalError>;
+pub trait RenderTemplate {
+    fn render_template<T>(self, template_name: &str, data: T) -> Result<String, InternalError>
+    where
+        T: Serialize;
 }
 
 #[derive(Clone, Debug)]
@@ -79,8 +80,7 @@ pub(super) async fn handle_render_template(
     else {
         return response;
     };
-    let render_template = render_template_with(&ctx);
-    let html = match render_template(&template.meta.name, template.data) {
+    let html = match ctx.render_template(&template.meta.name, template.data) {
         Ok(html) => html,
         Err(error) => {
             response = Template::error(error).into_response();
@@ -88,7 +88,8 @@ pub(super) async fn handle_render_template(
                 .extensions_mut()
                 .remove::<Template<HttpResponseExtension>>()
                 .unwrap();
-            render_template(&template.meta.name, template.data).expect("render error template")
+            ctx.render_template(&template.meta.name, template.data)
+                .expect("render error template")
         }
     };
     let (parts, _) = response.into_parts();

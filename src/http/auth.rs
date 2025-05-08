@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{
-        auth::todo_rename_signup,
+        auth::signup,
         validation::{try_convert, ConversionFailure},
     },
     domain::auth::{SaveNewUserError, SignupData, SignupError},
@@ -60,7 +60,7 @@ pub async fn handle_signup(
     State(ctx): State<AppContext>,
     Form(form): Form<SignupForm>,
 ) -> Result<Redirect, ErrorTemplate<SignupForm, SignupError>> {
-    todo_rename_signup(&ctx, form)
+    signup(&ctx, form)
         .await
         .map(|_| Redirect::to("/"))
         .map_err(|error| Template::new(SIGNUP_PAGE, error))

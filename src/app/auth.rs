@@ -1,6 +1,6 @@
 use crate::{
     app::error::log_result,
-    context::{database::auth::save_new_user_with, hasher::hash_password_with, AppContext},
+    context::AppContext,
     domain::{
         auth::{HashPassword, NewUser, SaveNewUser, Signup, SignupData, SignupError},
         error::{DomainError, DomainResult},
@@ -13,27 +13,29 @@ use super::{
 };
 
 #[tracing::instrument(skip(ctx))]
-pub async fn todo_rename_signup<T>(ctx: &AppContext, form: T) -> AppResult<T, (), SignupError>
+pub async fn signup<T>(ctx: &AppContext, form: T) -> AppResult<T, (), SignupError>
 where
     T: Clone + core::fmt::Debug,
     SignupData: TryFrom<T, Error = ConversionFailure<T>>,
 {
     log_result!(async {
         let signup_data = SignupData::try_from(form.clone()).map_err(AppError::from)?;
-        signup_with(ctx)(signup_data)
+        ctx.signup(signup_data)
             .await
             .map_err(AppErrorKind::Logical)
             .map_err(|error| error.with_input(form))
     })
 }
 
-pub fn signup_with(ctx: &AppContext) -> impl Signup {
-    async |form| signup(hash_password_with(ctx), save_new_user_with(ctx), form).await
+impl Signup for &AppContext {
+    async fn signup(self, form: SignupData) -> DomainResult<(), SignupError> {
+        signup_with(self, self, form).await
+    }
 }
 
-async fn signup(
-    hash_password: impl HashPassword,
-    save_new_user: impl SaveNewUser,
+async fn signup_with(
+    hasher: impl HashPassword,
+    db: impl SaveNewUser,
     form: SignupData,
 ) -> DomainResult<(), SignupError> {
     let SignupData {
@@ -41,11 +43,11 @@ async fn signup(
         name,
         password,
     } = form;
-    let password_hash = hash_password(password).map_err(DomainError::cast)?;
+    let password_hash = hasher.hash_password(password).map_err(DomainError::cast)?;
     let new_user = NewUser {
         email,
         name,
         password_hash,
     };
-    save_new_user(new_user).await.map_err(DomainError::cast)
+    db.save_new_user(new_user).await.map_err(DomainError::cast)
 }
