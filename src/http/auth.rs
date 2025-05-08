@@ -48,8 +48,8 @@ pub struct SignupForm {
 impl HttpError for SignupError {
     fn status_code(&self) -> StatusCode {
         match self {
-            Self::HashPassword(error) => match *error {},
-            Self::SaveUser(error) => match error {
+            Self::HashPasswordError(error) => match *error {},
+            Self::SaveNewUserError(error) => match error {
                 SaveNewUserError::EmailTaken => StatusCode::CONFLICT,
             },
         }

@@ -1,51 +1,24 @@
-use thiserror::Error;
+use super::prelude::*;
 
-use super::{
-    email::Email,
-    error::DomainResult,
-    name::Name,
-    password::{Password, PasswordHash},
-};
+define! {
+    record SignupData = (email, password, name);
 
-pub trait Signup {
-    async fn signup(self, input: SignupData) -> DomainResult<(), SignupError>;
-}
+    operation Signup = async (SignupData) -> { (), SignupError };
 
-pub trait HashPassword {
-    fn hash_password(self, input: Password) -> DomainResult<PasswordHash, HashPasswordError>;
-}
+    error SignupError = {
+        HashPasswordError,
+        SaveNewUserError,
+    };
 
-pub trait SaveNewUser {
-    async fn save_new_user(self, input: NewUser) -> DomainResult<(), SaveNewUserError>;
-}
+    operation HashPassword = (Password) -> { PasswordHash, HashPasswordError };
 
-#[derive(Debug, Clone)]
-pub struct SignupData {
-    pub email: Email,
-    pub password: Password,
-    pub name: Name,
-}
+    error HashPasswordError = { };
 
-#[derive(Debug, Clone)]
-pub struct NewUser {
-    pub email: Email,
-    pub password_hash: PasswordHash,
-    pub name: Name,
-}
+    record NewUser = (email, password_hash, name);
 
-#[derive(Debug, Error)]
-pub enum SignupError {
-    #[error(transparent)]
-    SaveUser(#[from] SaveNewUserError),
-    #[error(transparent)]
-    HashPassword(#[from] HashPasswordError),
-}
+    operation SaveNewUser = async (NewUser) -> { (), SaveNewUserError };
 
-#[derive(Debug, Error)]
-pub enum HashPasswordError {}
-
-#[derive(Debug, Error)]
-pub enum SaveNewUserError {
-    #[error("Email address is already in use")]
-    EmailTaken,
+    error SaveNewUserError = {
+        EmailTaken = "Email address is already in use",
+    };
 }

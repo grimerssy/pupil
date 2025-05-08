@@ -15,7 +15,10 @@ impl SaveNewUser for &AppContext {
     }
 }
 
-async fn save_new_user_with(db: &Database, new_user: NewUser) -> DomainResult<(), SaveNewUserError> {
+async fn save_new_user_with(
+    db: &Database,
+    new_user: NewUser,
+) -> DomainResult<(), SaveNewUserError> {
     match sqlx::query(
         "
         insert into users

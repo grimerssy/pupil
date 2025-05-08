@@ -28,21 +28,21 @@ where
 }
 
 impl Signup for &AppContext {
-    async fn signup(self, form: SignupData) -> DomainResult<(), SignupError> {
-        signup_with(self, self, form).await
+    async fn signup(self, signup_data: SignupData) -> DomainResult<(), SignupError> {
+        signup_with(self, self, signup_data).await
     }
 }
 
 async fn signup_with(
     hasher: impl HashPassword,
     db: impl SaveNewUser,
-    form: SignupData,
+    signup_data: SignupData,
 ) -> DomainResult<(), SignupError> {
     let SignupData {
         email,
         name,
         password,
-    } = form;
+    } = signup_data;
     let password_hash = hasher.hash_password(password).map_err(DomainError::cast)?;
     let new_user = NewUser {
         email,
