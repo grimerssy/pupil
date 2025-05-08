@@ -3,9 +3,9 @@ use hasher::{Hasher, HasherConfig};
 use serde::Deserialize;
 use template::{TemplateConfig, TemplateRenderer};
 
-pub mod database;
-pub mod hasher;
-pub mod template;
+mod database;
+mod hasher;
+mod template;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AppConfig {

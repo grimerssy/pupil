@@ -4,7 +4,7 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
 
 use crate::domain::error::DomainError;
 
-pub mod auth;
+mod auth;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct DatabaseConfig {
