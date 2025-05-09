@@ -1,9 +1,9 @@
 use crate::{
+    context::AppContext,
     domain::{
         auth::{NewUser, SaveNewUser, SaveNewUserError},
         error::{DomainError, DomainResult},
     },
-    AppContext,
 };
 
 use super::{sql_error, Database};

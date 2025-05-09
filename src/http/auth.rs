@@ -12,9 +12,7 @@ use crate::{
     app::{
         auth::signup,
         validation::{try_convert, ConversionFailure},
-    },
-    domain::auth::{SaveNewUserError, SignupData, SignupError},
-    AppContext,
+    }, context::AppContext, domain::auth::{SaveNewUserError, SignupData, SignupError}
 };
 
 use super::{

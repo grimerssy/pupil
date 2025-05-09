@@ -1,4 +1,4 @@
-use pupil::*;
+use pupil::prelude::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

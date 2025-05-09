@@ -34,18 +34,20 @@ pub struct HttpConfig {
 }
 
 pub async fn serve_http(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
-    let router = root_routes().with_middleware(ctx.clone()).with_state(ctx);
     let addr = SocketAddr::from((config.host, config.port));
     let listener = TcpListener::bind(addr).await?;
+    let router = root_router(ctx);
     axum::serve(listener, router.into_make_service())
         .await
         .context("start http server")
 }
 
-fn root_routes() -> Router<AppContext> {
+fn root_router(ctx: AppContext) -> Router {
     Router::new()
         .route("/", get(index))
         .nest("/auth", auth_routes())
+        .with_middleware(ctx.clone())
+        .with_state(ctx)
         .merge(static_router())
 }
 
