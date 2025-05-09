@@ -68,7 +68,7 @@ impl TemplateMeta {
     }
 }
 
-pub(super) async fn handle_render_template(
+pub(super) async fn render_template(
     State(ctx): State<AppContext>,
     req: Request,
     next: Next,

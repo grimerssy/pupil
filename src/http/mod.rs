@@ -1,4 +1,4 @@
-pub use middleware::template::RenderTemplate;
+pub use middleware::{template::RenderTemplate, DefaultLanguage, LookupLanguage};
 
 use auth::auth_routes;
 use response::HttpResponse;

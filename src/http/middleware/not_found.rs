@@ -14,7 +14,7 @@ impl HttpError for RouteNotFound {
 }
 
 #[tracing::instrument]
-pub async fn handle_not_found() -> View<RouteNotFound> {
+pub async fn not_found_view() -> View<RouteNotFound> {
     let error = RouteNotFound;
     tracing::info!(?error);
     View::error(error)

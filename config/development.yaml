@@ -1,8 +1,9 @@
 http:
   host: [127, 0, 0, 1]
   port: 8080
-templates:
-  path: "templates/**/*.html"
+i18n:
+  path: "i18n"
+  default_language: en-US
 database:
   host: 127.0.0.1
   port: 5432
@@ -16,3 +17,5 @@ hasher:
   iterations: 1
   parallelism_factor: 1
   output_length: 32
+templates:
+  path: "templates/**/*.html"

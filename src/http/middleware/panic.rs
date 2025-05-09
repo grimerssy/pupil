@@ -7,7 +7,7 @@ use axum::response::{IntoResponse, Response};
 use super::view::View;
 
 #[tracing::instrument(skip(panic_message))]
-pub fn handle_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
+pub fn catch_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
     let error = if let Some(msg) = panic_message.downcast_ref::<String>() {
         anyhow!("{msg}")
     } else if let Some(msg) = panic_message.downcast_ref::<&str>() {

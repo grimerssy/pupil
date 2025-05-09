@@ -36,7 +36,7 @@ impl<T> View<T> {
     }
 }
 
-pub(super) async fn handle_render_view(
+pub(super) async fn render_view(
     response_type: LazyResponseType,
     req: Request,
     next: Next,

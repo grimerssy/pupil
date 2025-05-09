@@ -2,15 +2,20 @@ pub mod response_type;
 pub mod template;
 pub mod view;
 
+mod localization;
 mod not_found;
 mod panic;
 
-use axum::{middleware, Router};
-use not_found::handle_not_found;
-use panic::handle_panic;
-use template::handle_render_template;
+pub use localization::{DefaultLanguage, LookupLanguage};
+
+use localization::{redirect_to_default_locale, assert_valid_locale};
+
+use axum::{middleware, routing::get, Router};
+use not_found::not_found_view;
+use panic::catch_panic;
+use template::render_template;
 use tower_http::{catch_panic::CatchPanicLayer, trace::TraceLayer};
-use view::handle_render_view;
+use view::render_view;
 
 use crate::context::AppContext;
 
@@ -18,15 +23,17 @@ pub trait RouterExt {
     fn with_middleware(self, ctx: AppContext) -> Self;
 }
 
-impl<S> RouterExt for Router<S>
-where
-    S: Clone + Send + Sync + 'static,
+impl RouterExt for Router<AppContext>
 {
     fn with_middleware(self, ctx: AppContext) -> Self {
-        self.fallback(handle_not_found)
-            .layer(CatchPanicLayer::custom(handle_panic))
-            .layer(middleware::from_fn(handle_render_view))
-            .layer(middleware::from_fn_with_state(ctx, handle_render_template))
+        Router::new()
+            .nest("/{locale}/", self)
+            .fallback(not_found_view)
+            .layer(CatchPanicLayer::custom(catch_panic))
+            .layer(middleware::from_fn(render_view))
+            .layer(middleware::from_fn_with_state(ctx.clone(), render_template))
+            .layer(middleware::from_fn_with_state(ctx, assert_valid_locale))
+            .route("/", get(redirect_to_default_locale))
             .layer(TraceLayer::new_for_http())
     }
 }
