@@ -27,15 +27,15 @@ where
     })
 }
 
-impl Signup for &AppContext {
-    async fn signup(self, signup_data: SignupData) -> DomainResult<(), SignupError> {
+impl Signup for AppContext {
+    async fn signup(&self, signup_data: SignupData) -> DomainResult<(), SignupError> {
         signup_with(self, self, signup_data).await
     }
 }
 
 async fn signup_with(
-    hasher: impl HashPassword,
-    db: impl SaveNewUser,
+    hasher: &impl HashPassword,
+    db: &impl SaveNewUser,
     signup_data: SignupData,
 ) -> DomainResult<(), SignupError> {
     let SignupData {

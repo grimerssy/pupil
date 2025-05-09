@@ -68,9 +68,9 @@ impl Hasher {
     }
 }
 
-impl HashPassword for &AppContext {
+impl HashPassword for AppContext {
     #[tracing::instrument(skip(self))]
-    fn hash_password(self, password: Password) -> DomainResult<PasswordHash, HashPasswordError> {
+    fn hash_password(&self, password: Password) -> DomainResult<PasswordHash, HashPasswordError> {
         hash_password_with(&self.hasher, password)
     }
 }

@@ -29,9 +29,9 @@ impl TemplateRenderer {
     }
 }
 
-impl RenderTemplate for &AppContext {
+impl RenderTemplate for AppContext {
     #[tracing::instrument(skip(self, data), err(Debug))]
-    fn render_template<T>(self, template_name: &str, data: T) -> Result<String, InternalError>
+    fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
     where
         T: Serialize,
     {

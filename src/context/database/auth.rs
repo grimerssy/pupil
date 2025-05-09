@@ -8,9 +8,9 @@ use crate::{
 
 use super::{sql_error, Database};
 
-impl SaveNewUser for &AppContext {
+impl SaveNewUser for AppContext {
     #[tracing::instrument(skip(self))]
-    async fn save_new_user(self, new_user: NewUser) -> DomainResult<(), SaveNewUserError> {
+    async fn save_new_user(&self, new_user: NewUser) -> DomainResult<(), SaveNewUserError> {
         save_new_user_with(&self.database, new_user).await
     }
 }

@@ -18,7 +18,7 @@ macro_rules! define {
         ::paste::paste! {
             pub trait $action {
                 $($async)? fn [<$action:snake>](
-                    self,
+                    &self,
                     [<$input:snake>]: $input,
                 ) -> $crate::domain::error::DomainResult<$success, $error>;
             }
