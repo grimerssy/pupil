@@ -8,7 +8,7 @@ mod panic;
 
 pub use localization::{DefaultLanguage, LookupLanguage};
 
-use localization::{redirect_to_default_locale, assert_valid_locale};
+use localization::{assert_valid_locale, redirect_to_default_locale};
 
 use axum::{middleware, routing::get, Router};
 use not_found::not_found_view;
@@ -23,8 +23,7 @@ pub trait RouterExt {
     fn with_middleware(self, ctx: AppContext) -> Self;
 }
 
-impl RouterExt for Router<AppContext>
-{
+impl RouterExt for Router<AppContext> {
     fn with_middleware(self, ctx: AppContext) -> Self {
         Router::new()
             .nest("/{locale}/", self)
