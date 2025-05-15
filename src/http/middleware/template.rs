@@ -18,7 +18,7 @@ use crate::{
     },
 };
 
-pub trait RenderTemplate {
+pub trait TemplateRenderer {
     fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
     where
         T: Serialize;

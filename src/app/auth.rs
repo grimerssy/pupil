@@ -35,7 +35,7 @@ impl Signup for AppContext {
 
 async fn signup_with(
     hasher: &impl HashPassword,
-    db: &impl SaveNewUser,
+    storage: &impl SaveNewUser,
     signup_data: SignupData,
 ) -> DomainResult<(), SignupError> {
     let SignupData {
@@ -49,5 +49,5 @@ async fn signup_with(
         name,
         password_hash,
     };
-    db.save_new_user(new_user).await.map_err(DomainError::cast)
+    storage.save_new_user(new_user).await.map_err(DomainError::cast)
 }

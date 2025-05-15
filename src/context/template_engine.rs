@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
 use tera::Tera;
 
-use crate::{context::AppContext, domain::error::InternalError, http::RenderTemplate};
+use crate::{context::AppContext, domain::error::InternalError, http::TemplateRenderer};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct TemplateConfig {
@@ -12,11 +12,11 @@ pub struct TemplateConfig {
 }
 
 #[derive(Clone)]
-pub struct TemplateRenderer {
+pub struct TemplateEngine {
     tera: Arc<Tera>,
 }
 
-impl TemplateRenderer {
+impl TemplateEngine {
     pub fn new(config: TemplateConfig) -> anyhow::Result<Self> {
         let templates = config
             .path
@@ -27,20 +27,18 @@ impl TemplateRenderer {
             .context("construct tera renderer")?;
         Ok(Self { tera })
     }
-}
 
-impl RenderTemplate for AppContext {
     #[tracing::instrument(skip(self, data), err(Debug))]
     fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
     where
         T: Serialize,
     {
-        render_template_with(&self.template_renderer, template_name, data)
+        render_template_with(self, template_name, data)
     }
 }
 
 fn render_template_with<T>(
-    renderer: &TemplateRenderer,
+    renderer: &TemplateEngine,
     template_name: &str,
     data: T,
 ) -> Result<String, InternalError>
@@ -60,6 +58,15 @@ where
         .context("render template")
         .map_err(InternalError::from)?;
     Ok(html)
+}
+
+impl TemplateRenderer for AppContext {
+    fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
+    where
+        T: Serialize,
+    {
+        self.template_engine.render_template(template_name, data)
+    }
 }
 
 #[cfg(debug_assertions)]

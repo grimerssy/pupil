@@ -2,12 +2,12 @@ use database::{Database, DatabaseConfig};
 use hasher::{Hasher, HasherConfig};
 use localizer::{I18nConfig, Localizer};
 use serde::Deserialize;
-use template::{TemplateConfig, TemplateRenderer};
+use template_engine::{TemplateConfig, TemplateEngine};
 
 mod database;
 mod hasher;
 mod localizer;
-mod template;
+mod template_engine;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AppConfig {
@@ -23,7 +23,7 @@ pub struct AppContext {
     localizer: Localizer,
     database: Database,
     hasher: Hasher,
-    template_renderer: TemplateRenderer,
+    template_engine: TemplateEngine,
 }
 
 impl AppContext {
@@ -32,7 +32,7 @@ impl AppContext {
             localizer: Localizer::new(config.i18n)?,
             database: Database::new(config.database),
             hasher: Hasher::new(config.hasher)?,
-            template_renderer: TemplateRenderer::new(config.templates)?,
+            template_engine: TemplateEngine::new(config.templates)?,
         };
         Ok(ctx)
     }
