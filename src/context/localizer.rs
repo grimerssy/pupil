@@ -11,23 +11,16 @@ use serde::Deserialize;
 use unic_langid::LanguageIdentifier;
 use walkdir::WalkDir;
 
-use crate::http::{DefaultLanguage, LookupLanguage};
-
-use super::AppContext;
-
 #[derive(Clone, Debug, Deserialize)]
 pub struct I18nConfig {
     pub path: PathBuf,
-    pub default_language: LanguageIdentifier,
 }
 
 #[derive(Clone)]
 pub struct Localizer {
     #[allow(unused)]
     resource_path: PathBuf,
-    default_language: LanguageIdentifier,
     #[allow(unused)]
-    supported_languages: Box<[LanguageIdentifier]>,
     bundles: Arc<HashMap<LanguageIdentifier, FluentBundle<FluentResource>>>,
 }
 
@@ -46,12 +39,6 @@ impl Localizer {
                     .map(|lang| (lang, dir_entry))
             })
             .collect::<Vec<_>>();
-        let supported_languages = parsed_entries
-            .iter()
-            .map(|(lang, _)| lang)
-            .cloned()
-            .collect::<Vec<_>>()
-            .into_boxed_slice();
         let bundles = parsed_entries
             .into_iter()
             .map(|(lang, dir_entry)| {
@@ -62,22 +49,8 @@ impl Localizer {
             .context("create bundles")?;
         Ok(Self {
             resource_path: config.path,
-            default_language: config.default_language,
-            supported_languages,
             bundles,
         })
-    }
-}
-
-impl DefaultLanguage for AppContext {
-    fn default_language(&self) -> &LanguageIdentifier {
-        &self.localizer.default_language
-    }
-}
-
-impl LookupLanguage for AppContext {
-    fn lookup_language(&self, language: &LanguageIdentifier) -> bool {
-        self.localizer.bundles.contains_key(language)
     }
 }
 

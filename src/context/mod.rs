@@ -19,6 +19,7 @@ pub struct AppConfig {
 
 #[derive(Clone)]
 pub struct AppContext {
+    #[allow(unused)]
     localizer: Localizer,
     database: Database,
     hasher: Hasher,
