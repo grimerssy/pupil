@@ -1,10 +1,16 @@
-<header class="bg-base-200/90 sticky top-0 z-30 shadow-sm">
+<header class="bg-base-100/90 sticky top-0 z-30 shadow-sm">
   <nav class="navbar">
     <div class="navbar-start">
-      <a href="/" class="btn btn-ghost text-xl">{{ localize(key="app-title", lang=lang) }}</a>
+      <a href="/" class="btn btn-ghost text-xl">
+        {{ localize(key="app-title", lang=lang) }}
+      </a>
     </div>
     <div class="navbar-end">
-      <a href="/auth/signup" class="btn btn-ghost">{{  localize(key="signup", lang=lang) }}</a>
+      {% include "components/theme-controller.html" %}
+      <div class="divider divider-horizontal"></div>
+      <a href="/auth/signup" class="btn btn-ghost">
+        {{ localize(key="signup", lang=lang) }}
+      </a>
     </div>
   </nav>
 </header>
