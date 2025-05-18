@@ -15,6 +15,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "accept-language"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f27d075294830fcab6f66e320dab524bc6d048f4a151698e153205559113772"
+
+[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1593,6 +1599,7 @@ name = "pupil"
 version = "0.1.0"
 dependencies = [
  "accept-header",
+ "accept-language",
  "anyhow",
  "argon2",
  "axum",

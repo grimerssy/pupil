@@ -2,11 +2,13 @@ use std::borrow::Cow;
 
 use axum::{
     extract::{Request, State},
+    http::header::ACCEPT_LANGUAGE,
     middleware::Next,
     response::{Html, IntoResponse, Response},
     Extension,
 };
 use serde::Serialize;
+use unic_langid::LanguageIdentifier;
 
 use crate::{
     app::{error::AppError, AppContext},
@@ -18,9 +20,19 @@ use crate::{
 };
 
 pub trait TemplateRenderer {
-    fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
+    fn render_template<T>(
+        &self,
+        template_name: &str,
+        data: T,
+        lang: &LanguageIdentifier,
+    ) -> Result<String, InternalError>
     where
         T: Serialize;
+}
+
+pub trait LanguageNegotiator {
+    fn negotiate_language(&self, sorted_preferences: Vec<LanguageIdentifier>)
+        -> LanguageIdentifier;
 }
 
 #[derive(Clone, Debug)]
@@ -72,6 +84,7 @@ pub(super) async fn render_template(
     req: Request,
     next: Next,
 ) -> Response {
+    let accept_language_header = req.headers().get(ACCEPT_LANGUAGE).cloned();
     let mut response = next.run(req).await;
     let Some(template) = response
         .extensions_mut()
@@ -80,7 +93,14 @@ pub(super) async fn render_template(
         return response;
     };
     let renderer = ctx.templating_engine;
-    let html = match renderer.render_template(&template.meta.name, template.data) {
+    let language_preferences = accept_language_header
+        .and_then(|header| header.to_str().ok().map(accept_language::parse))
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|lang| lang.parse::<LanguageIdentifier>().ok())
+        .collect::<Vec<_>>();
+    let lang = ctx.localizer.negotiate_language(language_preferences);
+    let html = match renderer.render_template(&template.meta.name, template.data, &lang) {
         Ok(html) => html,
         Err(error) => {
             response = Template::error(error).into_response();
@@ -89,7 +109,7 @@ pub(super) async fn render_template(
                 .remove::<Template<HttpResponseExtension>>()
                 .unwrap();
             renderer
-                .render_template(&template.meta.name, template.data)
+                .render_template(&template.meta.name, template.data, &lang)
                 .expect("render error template")
         }
     };

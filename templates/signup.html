@@ -12,7 +12,7 @@
       {{ form::input(context=context, field="password", label="Password", type="password") }}
       <input
         type="submit"
-        value="{{ localize(key="signup-action", lang="en-US") }}"
+        value="{{ localize(key="signup-action", lang=lang) }}"
         class="btn btn-soft btn-primary mt-4"
       />
       {{ form::submission_error(context=context) }}

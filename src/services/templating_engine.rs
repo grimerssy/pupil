@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
 use tera::Tera;
+use unic_langid::LanguageIdentifier;
 
 use crate::{domain::error::InternalError, http::TemplateRenderer};
 
@@ -45,11 +46,11 @@ where
     L: TemplateLocalizer + 'static,
 {
     #[tracing::instrument(skip(self, data), err(Debug))]
-    fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
+    fn render_template<T>(&self, template_name: &str, data: T, lang: &LanguageIdentifier) -> Result<String, InternalError>
     where
         T: Serialize,
     {
-        render_template_with(self, template_name, data)
+        render_template_with(self, template_name, data, lang)
     }
 }
 
@@ -57,6 +58,7 @@ fn render_template_with<T, L>(
     templating_engine: &TemplatingEngine<L>,
     template_name: &str,
     data: T,
+    lang: &LanguageIdentifier,
 ) -> Result<String, InternalError>
 where
     T: Serialize,
@@ -69,6 +71,7 @@ where
         .map_err(InternalError::from)?;
     let mut tera_context = tera::Context::new();
     tera_context.insert("context", &context);
+    tera_context.insert("lang", lang);
     let html = templating_engine
         .tera
         .render(template_name, &tera_context)

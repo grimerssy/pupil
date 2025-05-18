@@ -2,7 +2,7 @@ use std::{
     borrow::Cow,
     collections::HashMap,
     fs::{read_dir, read_to_string},
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::Arc,
 };
 
@@ -13,27 +13,37 @@ use serde::Deserialize;
 use unic_langid::LanguageIdentifier;
 use walkdir::WalkDir;
 
-use crate::domain::error::InternalError;
+use crate::{domain::error::InternalError, http::LanguageNegotiator};
 
 use super::templating_engine::TemplateLocalizer;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct I18nConfig {
     pub path: PathBuf,
+    pub fallback: LanguageIdentifier,
 }
 
 pub struct Localizer {
-    resource_path: PathBuf,
+    path: PathBuf,
+    fallback: LanguageIdentifier,
     bundles: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
 }
 
 impl Localizer {
     pub fn new(config: I18nConfig) -> anyhow::Result<Self> {
-        Self::new_with(config.path)
+        let I18nConfig { path, fallback } = config;
+        let bundles = Self::read_bundles(&path)?;
+        Ok(Self {
+            path,
+            fallback,
+            bundles,
+        })
     }
 
-    fn new_with(resource_path: PathBuf) -> anyhow::Result<Self> {
-        let parsed_entries = read_dir(&resource_path)
+    fn read_bundles(
+        resource_path: impl AsRef<Path>,
+    ) -> anyhow::Result<HashMap<LanguageIdentifier, FluentBundle<FluentResource>>> {
+        let parsed_entries = read_dir(resource_path)
             .and_then(|dir_items| dir_items.into_iter().collect::<Result<Vec<_>, _>>())
             .context("read i18n directory")?
             .into_iter()
@@ -53,10 +63,7 @@ impl Localizer {
             })
             .collect::<Result<HashMap<_, _>, _>>()
             .context("create bundles")?;
-        Ok(Self {
-            resource_path,
-            bundles,
-        })
+        Ok(bundles)
     }
 
     fn lookup(
@@ -89,10 +96,36 @@ impl Localizer {
     }
 }
 
+impl LanguageNegotiator for Localizer {
+    fn negotiate_language(
+        &self,
+        sorted_preferences: Vec<LanguageIdentifier>,
+    ) -> LanguageIdentifier {
+        sorted_preferences
+            .into_iter()
+            .filter_map(|preference| {
+                self.supported_languages()
+                    .find(|supported| supported.language == preference.language)
+            })
+            .next()
+            .unwrap_or(&self.fallback)
+            .clone()
+    }
+}
+
 impl TemplateLocalizer for Arc<Localizer> {
     fn reload(&mut self) -> Result<(), InternalError> {
-        let localizer =
-            Localizer::new_with(self.resource_path.clone()).context("reload localizer")?;
+        let Localizer {
+            path: resource_path,
+            fallback: fallback_language,
+            bundles: _,
+        } = self.as_ref();
+        let bundles = Localizer::read_bundles(resource_path).context("reload localizer")?;
+        let localizer = Localizer {
+            path: resource_path.clone(),
+            fallback: fallback_language.clone(),
+            bundles,
+        };
         *self = Arc::new(localizer);
         Ok(())
     }

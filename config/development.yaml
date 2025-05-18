@@ -3,7 +3,7 @@ http:
   port: 8080
 i18n:
   path: "i18n"
-  default_language: en-US
+  fallback: en-US
 database:
   host: 127.0.0.1
   port: 5432
