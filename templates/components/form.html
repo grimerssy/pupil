@@ -1,6 +1,6 @@
-{% macro input(context, field, label, type="text") %}
+{% macro input(context, field, type="text") %}
   <div>
-    <label class="label">{{ label }}</label>
+    <label class="label">{{ localize(key=field, lang=lang) }}</label>
     <input
       name="{{ field }}"
       type="{{ type }}"
@@ -8,7 +8,7 @@
         value="{{ context.input | get(key=field) }}"
       {% endif %}
       class="input w-full"
-      placeholder="{{ label }}"
+      placeholder="{{ localize(key=field, lang=lang) }}"
     />
     {% if context.status == "fail" %}
       <div class="grid">
