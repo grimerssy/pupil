@@ -1,14 +1,21 @@
 use std::{
+    borrow::Cow,
     collections::HashMap,
     fs::{read_dir, read_to_string},
     path::PathBuf,
+    sync::Arc,
 };
 
 use anyhow::Context;
-use fluent_bundle::{concurrent::FluentBundle, FluentResource};
+use fluent_bundle::{concurrent::FluentBundle, FluentArgs, FluentResource, FluentValue};
+use fluent_templates::{FluentLoader, Loader};
 use serde::Deserialize;
 use unic_langid::LanguageIdentifier;
 use walkdir::WalkDir;
+
+use crate::domain::error::InternalError;
+
+use super::templating_engine::TemplateLocalizer;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct I18nConfig {
@@ -16,15 +23,17 @@ pub struct I18nConfig {
 }
 
 pub struct Localizer {
-    #[allow(unused)]
     resource_path: PathBuf,
-    #[allow(unused)]
     bundles: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
 }
 
 impl Localizer {
     pub fn new(config: I18nConfig) -> anyhow::Result<Self> {
-        let parsed_entries = read_dir(&config.path)
+        Self::new_with(config.path)
+    }
+
+    fn new_with(resource_path: PathBuf) -> anyhow::Result<Self> {
+        let parsed_entries = read_dir(&resource_path)
             .and_then(|dir_items| dir_items.into_iter().collect::<Result<Vec<_>, _>>())
             .context("read i18n directory")?
             .into_iter()
@@ -45,9 +54,78 @@ impl Localizer {
             .collect::<Result<HashMap<_, _>, _>>()
             .context("create bundles")?;
         Ok(Self {
-            resource_path: config.path,
+            resource_path,
             bundles,
         })
+    }
+
+    fn lookup(
+        &self,
+        lang: &LanguageIdentifier,
+        text_id: &str,
+        args: Option<&HashMap<Cow<'static, str>, FluentValue>>,
+    ) -> Option<String> {
+        let bundle = self.bundles.get(lang)?;
+        let pattern = match text_id.split_once('.') {
+            Some((msg, attr)) => bundle
+                .get_message(msg)?
+                .attributes()
+                .find(|attribute| attribute.id() == attr)?
+                .value(),
+            None => bundle.get_message(text_id)?.value()?,
+        };
+        let args = args.map(|map| {
+            map.iter()
+                .map(|(k, v)| (k.as_ref(), v.clone()))
+                .collect::<FluentArgs<'_>>()
+        });
+        let mut errors = Vec::new();
+        let value = bundle.format_pattern(pattern, args.as_ref(), &mut errors);
+        errors.is_empty().then(|| value.into())
+    }
+
+    fn supported_languages(&self) -> impl Iterator<Item = &LanguageIdentifier> {
+        self.bundles.keys()
+    }
+}
+
+impl TemplateLocalizer for Arc<Localizer> {
+    fn reload(&mut self) -> Result<(), InternalError> {
+        let localizer =
+            Localizer::new_with(self.resource_path.clone()).context("reload localizer")?;
+        *self = Arc::new(localizer);
+        Ok(())
+    }
+
+    fn into_function(self) -> impl tera::Function {
+        FluentLoader::new(ArcLocalizer(self.clone()))
+    }
+}
+
+struct ArcLocalizer(Arc<Localizer>);
+
+impl Loader for ArcLocalizer {
+    fn lookup_complete(
+        &self,
+        lang: &LanguageIdentifier,
+        text_id: &str,
+        args: Option<&HashMap<Cow<'static, str>, FluentValue>>,
+    ) -> String {
+        self.try_lookup_complete(lang, text_id, args)
+            .unwrap_or_else(|| "unknown locale".to_owned())
+    }
+
+    fn try_lookup_complete(
+        &self,
+        lang: &LanguageIdentifier,
+        text_id: &str,
+        args: Option<&HashMap<Cow<'static, str>, FluentValue>>,
+    ) -> Option<String> {
+        self.0.lookup(lang, text_id, args)
+    }
+
+    fn locales(&self) -> Box<dyn Iterator<Item = &LanguageIdentifier> + '_> {
+        Box::new(self.0.supported_languages())
     }
 }
 

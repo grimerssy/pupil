@@ -26,7 +26,7 @@ pub struct AppContext {
     pub localizer: Arc<Localizer>,
     pub database: Database,
     pub hasher: Hasher,
-    pub templating_engine: Arc<TemplatingEngine>,
+    pub templating_engine: Arc<TemplatingEngine<Arc<Localizer>>>,
 }
 
 impl AppContext {
@@ -34,7 +34,8 @@ impl AppContext {
         let database = Database::new(config.database);
         let hasher = Hasher::new(config.hasher)?;
         let localizer = Arc::new(Localizer::new(config.i18n)?);
-        let templating_engine = Arc::new(TemplatingEngine::new(config.templates)?);
+        let templating_engine =
+            Arc::new(TemplatingEngine::new(config.templates, localizer.clone())?);
         Ok(Self {
             localizer,
             database,

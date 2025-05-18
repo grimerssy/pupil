@@ -6,28 +6,44 @@ use tera::Tera;
 
 use crate::{domain::error::InternalError, http::TemplateRenderer};
 
+static LOCALIZE_FUNCTION: &str = "localize";
+
+pub trait TemplateLocalizer: Clone {
+    fn reload(&mut self) -> Result<(), InternalError>;
+
+    fn into_function(self) -> impl tera::Function;
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct TemplateConfig {
     pub path: PathBuf,
 }
 
 #[derive(Clone)]
-pub struct TemplatingEngine {
+pub struct TemplatingEngine<L> {
     tera: Tera,
+    localizer: L,
 }
 
-impl TemplatingEngine {
-    pub fn new(config: TemplateConfig) -> anyhow::Result<Self> {
+impl<L> TemplatingEngine<L> {
+    pub fn new(config: TemplateConfig, localizer: L) -> anyhow::Result<Self>
+    where
+        L: TemplateLocalizer + 'static,
+    {
         let templates = config
             .path
             .to_str()
             .ok_or_else(|| anyhow!("template path contains invalid unicode"))?;
-        let tera = Tera::new(templates).context("construct tera renderer")?;
-        Ok(Self { tera })
+        let mut tera = Tera::new(templates).context("construct tera renderer")?;
+        tera.register_function(LOCALIZE_FUNCTION, localizer.clone().into_function());
+        Ok(Self { tera, localizer })
     }
 }
 
-impl TemplateRenderer for TemplatingEngine {
+impl<L> TemplateRenderer for TemplatingEngine<L>
+where
+    L: TemplateLocalizer + 'static,
+{
     #[tracing::instrument(skip(self, data), err(Debug))]
     fn render_template<T>(&self, template_name: &str, data: T) -> Result<String, InternalError>
     where
@@ -37,13 +53,14 @@ impl TemplateRenderer for TemplatingEngine {
     }
 }
 
-fn render_template_with<T>(
-    templating_engine: &TemplatingEngine,
+fn render_template_with<T, L>(
+    templating_engine: &TemplatingEngine<L>,
     template_name: &str,
     data: T,
 ) -> Result<String, InternalError>
 where
     T: Serialize,
+    L: TemplateLocalizer + 'static,
 {
     #[cfg(debug_assertions)]
     let templating_engine = reload_engine(templating_engine)?;
@@ -61,11 +78,21 @@ where
 }
 
 #[cfg(debug_assertions)]
-fn reload_engine(templating_engine: &TemplatingEngine) -> Result<TemplatingEngine, InternalError> {
+fn reload_engine<L>(
+    templating_engine: &TemplatingEngine<L>,
+) -> Result<TemplatingEngine<L>, InternalError>
+where
+    L: TemplateLocalizer + 'static,
+{
     let mut templating_engine = templating_engine.clone();
     templating_engine
         .tera
         .full_reload()
         .context("reload templates")?;
+    templating_engine.localizer.reload()?;
+    templating_engine.tera.register_function(
+        LOCALIZE_FUNCTION,
+        templating_engine.localizer.clone().into_function(),
+    );
     Ok(templating_engine)
 }
