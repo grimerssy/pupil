@@ -112,7 +112,7 @@ impl Loader for ArcLocalizer {
         args: Option<&HashMap<Cow<'static, str>, FluentValue>>,
     ) -> String {
         self.try_lookup_complete(lang, text_id, args)
-            .unwrap_or_else(|| "unknown locale".to_owned())
+            .unwrap_or_else(|| "translation error".to_owned())
     }
 
     fn try_lookup_complete(
