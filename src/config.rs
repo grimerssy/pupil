@@ -4,7 +4,7 @@ use anyhow::Context;
 use serde::Deserialize;
 use strum::{Display, EnumString, VariantNames};
 
-use crate::{context::AppConfig, http::HttpConfig};
+use crate::{app::AppConfig, http::HttpConfig};
 
 #[derive(Clone, Copy, Debug, Display, EnumString, VariantNames)]
 #[strum(serialize_all = "lowercase")]

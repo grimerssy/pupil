@@ -12,8 +12,6 @@ use crate::domain::{
     password::{Password, PasswordHash},
 };
 
-use super::AppContext;
-
 #[derive(Clone, Debug, Deserialize)]
 pub struct HasherConfig {
     secret: SecretString,
@@ -68,10 +66,10 @@ impl Hasher {
     }
 }
 
-impl HashPassword for AppContext {
+impl HashPassword for Hasher {
     #[tracing::instrument(skip(self))]
     fn hash_password(&self, password: Password) -> DomainResult<PasswordHash, HashPasswordError> {
-        hash_password_with(&self.hasher, password)
+        hash_password_with(self, password)
     }
 }
 

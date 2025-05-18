@@ -12,8 +12,8 @@ use crate::{
     app::{
         auth::signup,
         validation::{try_convert, ConversionFailure},
+        AppContext,
     },
-    context::AppContext,
     domain::auth::{SaveNewUserError, SignupData, SignupError},
 };
 

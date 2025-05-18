@@ -2,7 +2,6 @@ use std::{
     collections::HashMap,
     fs::{read_dir, read_to_string},
     path::PathBuf,
-    sync::Arc,
 };
 
 use anyhow::Context;
@@ -16,12 +15,11 @@ pub struct I18nConfig {
     pub path: PathBuf,
 }
 
-#[derive(Clone)]
 pub struct Localizer {
     #[allow(unused)]
     resource_path: PathBuf,
     #[allow(unused)]
-    bundles: Arc<HashMap<LanguageIdentifier, FluentBundle<FluentResource>>>,
+    bundles: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
 }
 
 impl Localizer {
@@ -45,7 +43,6 @@ impl Localizer {
                 bundle_from(lang.clone(), dir_entry.path()).map(|bundle| (lang, bundle))
             })
             .collect::<Result<HashMap<_, _>, _>>()
-            .map(Arc::new)
             .context("create bundles")?;
         Ok(Self {
             resource_path: config.path,

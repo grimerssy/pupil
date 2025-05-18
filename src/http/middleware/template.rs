@@ -9,8 +9,7 @@ use axum::{
 use serde::Serialize;
 
 use crate::{
-    app::error::AppError,
-    context::AppContext,
+    app::{error::AppError, AppContext},
     domain::error::InternalError,
     http::{
         error::HttpError,
@@ -80,7 +79,8 @@ pub(super) async fn render_template(
     else {
         return response;
     };
-    let html = match ctx.render_template(&template.meta.name, template.data) {
+    let renderer = ctx.templating_engine;
+    let html = match renderer.render_template(&template.meta.name, template.data) {
         Ok(html) => html,
         Err(error) => {
             response = Template::error(error).into_response();
@@ -88,7 +88,8 @@ pub(super) async fn render_template(
                 .extensions_mut()
                 .remove::<Template<HttpResponseExtension>>()
                 .unwrap();
-            ctx.render_template(&template.meta.name, template.data)
+            renderer
+                .render_template(&template.meta.name, template.data)
                 .expect("render error template")
         }
     };

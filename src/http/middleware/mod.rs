@@ -11,7 +11,7 @@ use template::render_template;
 use tower_http::{catch_panic::CatchPanicLayer, trace::TraceLayer};
 use view::render_view;
 
-use crate::context::AppContext;
+use crate::app::AppContext;
 
 pub trait RouterExt {
     fn with_middleware(self, ctx: AppContext) -> Self;

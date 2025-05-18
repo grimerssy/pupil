@@ -1,6 +1,5 @@
 use crate::{
     app::error::log_result,
-    context::AppContext,
     domain::{
         auth::{HashPassword, NewUser, SaveNewUser, Signup, SignupData, SignupError},
         error::{DomainError, DomainResult},
@@ -9,7 +8,7 @@ use crate::{
 
 use super::{
     error::{AppError, AppErrorKind, AppResult},
-    validation::ConversionFailure,
+    validation::ConversionFailure, AppContext,
 };
 
 #[tracing::instrument(skip(ctx))]
@@ -29,7 +28,7 @@ where
 
 impl Signup for AppContext {
     async fn signup(&self, signup_data: SignupData) -> DomainResult<(), SignupError> {
-        signup_with(self, self, signup_data).await
+        signup_with(&self.hasher, &self.database, signup_data).await
     }
 }
 
