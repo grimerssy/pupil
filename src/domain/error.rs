@@ -5,9 +5,7 @@ use educe::Educe;
 
 pub type DomainResult<T, E> = core::result::Result<T, DomainError<E>>;
 
-#[derive(Debug, thiserror::Error)]
-#[error(transparent)]
-pub struct InternalError(DomainError<Infallible>);
+pub type InternalError = DomainError<Infallible>;
 
 #[derive(Educe, thiserror::Error)]
 #[educe(Debug)]
@@ -44,6 +42,6 @@ fn fmt_error_chain(error: &anyhow::Error, f: &mut fmt::Formatter<'_>) -> fmt::Re
 
 impl From<anyhow::Error> for InternalError {
     fn from(value: anyhow::Error) -> Self {
-        Self(DomainError::Internal(value))
+        DomainError::Internal(value)
     }
 }
