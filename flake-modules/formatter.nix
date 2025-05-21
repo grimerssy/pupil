@@ -11,6 +11,7 @@
       ".direnv/*"
       "assets/*"
       "migrations/*"
+      "*.ftl"
     ];
     programs.nixfmt.enable = true;
     programs.rustfmt.enable = true;
