@@ -1618,7 +1618,6 @@ dependencies = [
  "sqlx",
  "strum",
  "tera",
- "thiserror 2.0.12",
  "tokio",
  "tower-http",
  "tracing",

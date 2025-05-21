@@ -1,74 +1,59 @@
-use educe::Educe;
 pub(crate) use macros::*;
+
+use educe::Educe;
 
 use core::fmt;
 use std::collections::HashMap;
 
-use serde::{ser::SerializeSeq, Serialize, Serializer};
+use serde::Serialize;
+
+use super::error::ErrorContext;
 
 #[derive(Debug)]
 pub struct Validation<I> {
     state: ValidationFailure<I>,
 }
 
-#[derive(Debug, thiserror::Error)]
-#[error("{errors}")]
+#[derive(Debug)]
 pub struct ValidationFailure<I> {
     pub input: I,
-    pub errors: ErrorList,
+    pub errors: Vec<ErrorContext>,
 }
 
-#[derive(Debug, thiserror::Error, Serialize)]
-#[error("{errors}")]
+#[derive(Debug, Serialize)]
 pub struct ConversionFailure<I> {
     pub input: I,
     pub errors: ValidationErrors,
 }
 
-#[derive(Educe, Default, thiserror::Error, Serialize)]
+#[derive(Educe, Default, Serialize)]
 #[educe(Debug)]
-#[error("{self:?}")]
-pub struct ValidationErrors(#[educe(Debug(method(fmt_keys)))] HashMap<&'static str, ErrorList>);
-
-#[derive(Default, thiserror::Error)]
-#[error("{self:?}")]
-pub struct ErrorList(Vec<anyhow::Error>);
+pub struct ValidationErrors(
+    #[educe(Debug(method(fmt_keys)))] HashMap<&'static str, Vec<ErrorContext>>,
+);
 
 impl<I> Validation<I> {
     pub fn new(input: I) -> Self {
         let state = ValidationFailure {
             input,
-            errors: ErrorList::default(),
+            errors: Vec::new(),
         };
         Self { state }
     }
 
-    pub fn check<T, E>(mut self, check: impl FnOnce(&I) -> Result<T, E>) -> Self
-    where
-        E: Into<anyhow::Error>,
-    {
-        if let Err(error) = check(&self.state.input) {
-            self.state.errors.add(error.into());
-        }
-        self
-    }
-
-    pub fn check_or_else<E>(
+    pub fn check_or_else(
         mut self,
         predicate: impl Fn(&I) -> bool,
-        error: impl FnOnce() -> E,
-    ) -> Self
-    where
-        E: Into<anyhow::Error>,
-    {
+        error: impl FnOnce() -> ErrorContext,
+    ) -> Self {
         if !predicate(&self.state.input) {
-            self.state.errors.add(error().into());
+            self.state.errors.push(error());
         }
         self
     }
 
     pub fn finish(self) -> Result<I, ValidationFailure<I>> {
-        if self.state.errors.0.is_empty() {
+        if self.state.errors.is_empty() {
             Ok(self.state.input)
         } else {
             Err(self.state)
@@ -77,7 +62,7 @@ impl<I> Validation<I> {
 }
 
 impl ValidationErrors {
-    pub fn add(&mut self, field: &'static str, mut errors: ErrorList) {
+    pub fn add(&mut self, field: &'static str, mut errors: Vec<ErrorContext>) {
         self.0
             .entry(field)
             .and_modify(|e| e.append(&mut errors))
@@ -86,39 +71,6 @@ impl ValidationErrors {
 
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
-    }
-}
-
-impl ErrorList {
-    pub fn add(&mut self, error: anyhow::Error) {
-        self.0.push(error)
-    }
-
-    fn append(&mut self, errors: &mut Self) {
-        self.0.append(&mut errors.0)
-    }
-}
-
-impl fmt::Debug for ErrorList {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut list = f.debug_list();
-        for error in self.0.iter() {
-            list.entry(&format_args!("{error}"));
-        }
-        list.finish()
-    }
-}
-
-impl Serialize for ErrorList {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut seq = serializer.serialize_seq(Some(self.0.len()))?;
-        for error in self.0.iter() {
-            seq.serialize_element(&format_args!("{error}"))?;
-        }
-        seq.end()
     }
 }
 

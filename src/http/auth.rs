@@ -19,8 +19,11 @@ use crate::{
 
 use super::{
     error::HttpError,
-    middleware::template::{ErrorTemplate, SuccessTemplate, Template},
-    response::HttpResponse,
+    middleware::{
+        template::Template,
+        view::{ErrorView, View},
+    },
+    response::Success,
     serialize_secret,
 };
 
@@ -33,8 +36,8 @@ pub fn auth_routes() -> Router<AppContext> {
     Router::new().nest("/signup", signup)
 }
 
-pub async fn singup_page() -> SuccessTemplate<()> {
-    Template::new(SIGNUP_PAGE, HttpResponse::success(()))
+pub async fn singup_page() -> Template<Success<()>> {
+    Template::new(SIGNUP_PAGE, Success(()))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,11 +62,11 @@ impl HttpError for SignupError {
 pub async fn handle_signup(
     State(ctx): State<AppContext>,
     Form(form): Form<SignupForm>,
-) -> Result<Redirect, ErrorTemplate<SignupForm, SignupError>> {
+) -> Result<Redirect, ErrorView<SignupForm, SignupError>> {
     signup(&ctx, form)
         .await
         .map(|_| Redirect::to("/"))
-        .map_err(|error| Template::new(SIGNUP_PAGE, error))
+        .map_err(|error| View::new(SIGNUP_PAGE, error))
 }
 
 impl TryFrom<SignupForm> for SignupData {

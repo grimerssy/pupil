@@ -34,22 +34,48 @@ macro_rules! define {
             }
         }
     };
-    (error $error:ident = { $( $variant:ident = $msg:literal ),*  $(,)? };) => {
-        #[derive(Debug, ::thiserror::Error)]
-        pub enum $error {
-            $(
-                #[error($msg)]
-                $variant,
-            )*
+    (error $error:ident = { $( $variant:ident ),*  $(,)? };) => {
+        ::paste::paste! {
+            #[derive(Debug)]
+            pub enum $error {
+                $( $variant, )*
+            }
+
+            impl $crate::app::error::ContextualError for $error {
+                fn error_context(self) -> $crate::app::error::ErrorContext {
+                    match self {
+                        $(
+                            Self::$variant => $crate::app::error::ErrorContext::new(
+                                stringify!([<$variant:snake:upper>])
+                            )
+                        )*
+                    }
+                }
+            }
         }
     };
-    (error $error:ident = { $( $variant:ident ),*  $(,)? };) => {
-        #[derive(Debug, ::thiserror::Error)]
+    (error $error:ident = { $( ($variant:ident) ),*  $(,)? };) => {
+        #[derive(Debug)]
         pub enum $error {
-            $(
-                #[error(transparent)]
-                $variant(#[from] $variant),
-            )*
+            $( $variant($variant), )*
+        }
+
+        $(
+            impl From<$variant> for $error {
+                fn from(value: $variant) -> Self {
+                    Self::$variant(value)
+                }
+            }
+        )*
+
+        impl $crate::app::error::ContextualError for $error {
+            fn error_context(self) -> $crate::app::error::ErrorContext {
+                match self {
+                    $(
+                        Self::$variant(error) => error.error_context(),
+                    )*
+                }
+            }
         }
     };
     (operation $action:ident = $($async:ident)? ($input:ty) -> { $ok:ty, $err:ty }; $( $rest:tt )*) => {
@@ -60,12 +86,12 @@ macro_rules! define {
         $crate::domain::define!(record $record = ( $( $field, )* ););
         $crate::domain::define!($( $rest )*);
     };
-    (error $error:ident = { $( $variant:ident = $msg:literal ),*  $(,)? }; $( $rest:tt )*) => {
-        $crate::domain::define!(error $error = { $( $variant = $msg, )* };);
-        $crate::domain::define!($( $rest )*);
-    };
     (error $error:ident = { $( $variant:ident ),*  $(,)? }; $( $rest:tt )*) => {
         $crate::domain::define!(error $error = { $( $variant, )* };);
+        $crate::domain::define!($( $rest )*);
+    };
+    (error $error:ident = { $( ($variant:ident) ),*  $(,)? }; $( $rest:tt )*) => {
+        $crate::domain::define!(error $error = { $( ($variant), )* };);
         $crate::domain::define!($( $rest )*);
     };
 }

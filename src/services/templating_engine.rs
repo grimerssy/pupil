@@ -46,7 +46,12 @@ where
     L: TemplateLocalizer + 'static,
 {
     #[tracing::instrument(skip(self, data), err(Debug))]
-    fn render_template<T>(&self, template_name: &str, data: T, lang: &LanguageIdentifier) -> Result<String, InternalError>
+    fn render_template<T>(
+        &self,
+        template_name: &str,
+        data: T,
+        lang: &LanguageIdentifier,
+    ) -> Result<String, InternalError>
     where
         T: Serialize,
     {

@@ -6,8 +6,8 @@ define! {
     operation Signup = async (SignupData) -> { (), SignupError };
 
     error SignupError = {
-        HashPasswordError,
-        SaveNewUserError,
+        (HashPasswordError),
+        (SaveNewUserError),
     };
 
     operation HashPassword = (Password) -> { PasswordHash, HashPasswordError };
@@ -19,6 +19,6 @@ define! {
     operation SaveNewUser = async (NewUser) -> { (), SaveNewUserError };
 
     error SaveNewUserError = {
-        EmailTaken = "Email address is already in use",
+        EmailTaken,
     };
 }

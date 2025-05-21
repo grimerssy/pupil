@@ -11,12 +11,9 @@ use serde::Serialize;
 use unic_langid::LanguageIdentifier;
 
 use crate::{
-    app::{error::AppError, AppContext},
+    app::AppContext,
     domain::error::InternalError,
-    http::{
-        error::HttpError,
-        response::{HttpResponse, HttpResponseExtension, SuccessHttpResponse},
-    },
+    http::response::{HttpResponse, Rejection, ResponseContext},
 };
 
 pub trait TemplateRenderer {
@@ -41,10 +38,6 @@ pub struct Template<T> {
     data: T,
 }
 
-pub type SuccessTemplate<T> = Template<SuccessHttpResponse<T>>;
-
-pub type ErrorTemplate<I, E> = Template<AppError<I, E>>;
-
 pub(super) type TemplateName = Cow<'static, str>;
 
 #[derive(Clone, Debug)]
@@ -54,8 +47,8 @@ pub struct TemplateMeta {
 
 impl<T> Template<T> {
     pub fn new(template_name: impl Into<TemplateName>, data: T) -> Self {
-        let template_meta = TemplateMeta::new(template_name);
-        Self::with_meta(template_meta, data)
+        let meta = TemplateMeta::new(template_name);
+        Self::with_meta(meta, data)
     }
 
     pub fn error(error: T) -> Self {
@@ -86,10 +79,7 @@ pub(super) async fn render_template(
 ) -> Response {
     let accept_language_header = req.headers().get(ACCEPT_LANGUAGE).cloned();
     let mut response = next.run(req).await;
-    let Some(template) = response
-        .extensions_mut()
-        .remove::<Template<HttpResponseExtension>>()
-    else {
+    let Some(template) = response.extensions_mut().remove::<Template<HttpResponse>>() else {
         return response;
     };
     let renderer = ctx.templating_engine;
@@ -103,10 +93,10 @@ pub(super) async fn render_template(
     let html = match renderer.render_template(&template.meta.name, template.data, &lang) {
         Ok(html) => html,
         Err(error) => {
-            response = Template::error(error).into_response();
+            response = Template::error(Rejection(error)).into_response();
             let template = response
                 .extensions_mut()
-                .remove::<Template<HttpResponseExtension>>()
+                .remove::<Template<HttpResponse>>()
                 .unwrap();
             renderer
                 .render_template(&template.meta.name, template.data, &lang)
@@ -117,21 +107,15 @@ pub(super) async fn render_template(
     (parts, Html(html)).into_response()
 }
 
-impl<I, O, V> IntoResponse for Template<HttpResponse<I, O, V>>
-where
-    I: Serialize + Send + Sync + 'static,
-    O: Serialize + Send + Sync + 'static,
-    V: Serialize + Send + Sync + 'static,
-{
+impl IntoResponse for Template<HttpResponse> {
     fn into_response(self) -> Response {
-        let view = Template::with_meta(self.meta, self.data.erase_types());
-        Extension(view).into_response()
+        Extension(self).into_response()
     }
 }
 
-impl<E> IntoResponse for Template<E>
+impl<T> IntoResponse for Template<T>
 where
-    E: HttpError,
+    T: ResponseContext,
 {
     fn into_response(self) -> Response {
         self.data

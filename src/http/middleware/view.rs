@@ -7,14 +7,15 @@ use axum::{
     Extension, Json,
 };
 use mime::{APPLICATION_JSON, TEXT_HTML};
-use serde::Serialize;
 
-use crate::http::{
-    error::HttpError,
-    response::{HttpResponse, HttpResponseExtension},
+use crate::{
+    app::error::AppError,
+    http::response::{HttpResponse, ResponseContext},
 };
 
-use super::template::{Template, TemplateMeta};
+use super::template::{Template, TemplateMeta, TemplateName};
+
+pub type ErrorView<I, E> = View<AppError<I, E>>;
 
 #[derive(Clone, Debug)]
 pub struct View<T> {
@@ -23,6 +24,11 @@ pub struct View<T> {
 }
 
 impl<T> View<T> {
+    pub fn new(template_name: impl Into<TemplateName>, data: T) -> Self {
+        let template_meta = TemplateMeta::new(template_name);
+        Self::with_meta(template_meta, data)
+    }
+
     pub fn error(error: T) -> Self {
         let template_meta = TemplateMeta::error();
         Self::with_meta(template_meta, error)
@@ -39,10 +45,7 @@ impl<T> View<T> {
 pub(super) async fn render_view(req: Request, next: Next) -> Response {
     let accept_header = req.headers().get(ACCEPT).cloned();
     let mut response = next.run(req).await;
-    let Some(view) = response
-        .extensions_mut()
-        .remove::<View<HttpResponseExtension>>()
-    else {
+    let Some(view) = response.extensions_mut().remove::<View<HttpResponse>>() else {
         return response;
     };
     let preference = accept_header
@@ -65,21 +68,15 @@ pub(super) async fn render_view(req: Request, next: Next) -> Response {
     (parts, body).into_response()
 }
 
-impl<I, O, V> IntoResponse for View<HttpResponse<I, O, V>>
-where
-    I: Serialize + Send + Sync + 'static,
-    O: Serialize + Send + Sync + 'static,
-    V: Serialize + Send + Sync + 'static,
-{
+impl IntoResponse for View<HttpResponse> {
     fn into_response(self) -> Response {
-        let view = View::with_meta(self.template_meta, self.data.erase_types());
-        Extension(view).into_response()
+        Extension(self).into_response()
     }
 }
 
-impl<E> IntoResponse for View<E>
+impl<T> IntoResponse for View<T>
 where
-    E: HttpError,
+    T: ResponseContext,
 {
     fn into_response(self) -> Response {
         self.data

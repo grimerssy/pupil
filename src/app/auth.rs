@@ -8,7 +8,8 @@ use crate::{
 
 use super::{
     error::{AppError, AppErrorKind, AppResult},
-    validation::ConversionFailure, AppContext,
+    validation::ConversionFailure,
+    AppContext,
 };
 
 #[tracing::instrument(skip(ctx))]
@@ -48,5 +49,8 @@ async fn signup_with(
         name,
         password_hash,
     };
-    storage.save_new_user(new_user).await.map_err(DomainError::cast)
+    storage
+        .save_new_user(new_user)
+        .await
+        .map_err(DomainError::cast)
 }

@@ -1,3 +1,5 @@
+{% import "components/error.html" as error %}
+
 {% macro input(context, field, type="text") %}
   <div>
     <label class="label">{{ localize(key=field, lang=lang) }}</label>
@@ -13,7 +15,7 @@
     {% if context.status == "fail" %}
       <div class="grid">
         {% for error in context.data | get(key=field, default=[]) %}
-          <span class="text-error">{{ error }}</span>
+          {{ error::error(error=error) }}
         {% endfor %}
       </div>
     {% endif %}
@@ -22,6 +24,6 @@
 
 {% macro submission_error(context) %}
   {% if context.status == "error" %}
-    <span class="text-error">{{ context.message }}</span>
+    {{ error::error(error=context.data) }}
   {% endif %}
 {% endmacro %}

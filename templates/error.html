@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% import "components/error.html" as error %}
 
 {% block content %}
   {% if context.status == "error" %}
-    <span class="text-error text-2xl font-semibold">{{ context.message }}</span>
+    <div class="text-2xl font-semibold">
+      {{ error::error(error=context.data) }}
+    </div>
   {% endif %}
 {% endblock content %}

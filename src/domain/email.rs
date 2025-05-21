@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
-use anyhow::anyhow;
 use educe::Educe;
 use email_address::EmailAddress;
 
-use crate::app::validation::{Validation, ValidationFailure};
-
-const EMAIL: &str = "Email";
+use crate::app::{
+    error::ErrorContext,
+    validation::{Validation, ValidationFailure},
+};
 
 const MAX_LENGTH: usize = 50;
 
@@ -20,10 +20,13 @@ impl TryFrom<String> for Email {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Validation::new(value)
-            .check(|v| EmailAddress::from_str(v))
+            .check_or_else(
+                |v| EmailAddress::from_str(v).is_ok(),
+                || ErrorContext::new("INVALID_EMAIL"),
+            )
             .check_or_else(
                 |v| v.len() <= MAX_LENGTH,
-                || anyhow!("{EMAIL} must not exceed {MAX_LENGTH} characters"),
+                || ErrorContext::new("EMAIL_TOO_LONG").with_number("max", MAX_LENGTH as f64),
             )
             .finish()
             .map(Self)

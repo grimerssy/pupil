@@ -3,29 +3,35 @@ use std::convert::Infallible;
 
 use educe::Educe;
 
+use crate::app::error::{ContextualError, ErrorContext};
+
 pub type DomainResult<T, E> = core::result::Result<T, DomainError<E>>;
 
 pub type InternalError = DomainError<Infallible>;
 
-#[derive(Educe, thiserror::Error)]
+#[derive(Educe)]
 #[educe(Debug)]
-pub enum DomainError<E>
-where
-    E: std::error::Error,
-{
-    #[error(transparent)]
+pub enum DomainError<E> {
     Expected(E),
-    #[error("An unexpected error occurred")]
     Internal(#[educe(Debug(method(fmt_error_chain)))] anyhow::Error),
 }
 
-impl<E> DomainError<E>
+impl<E> ContextualError for DomainError<E>
 where
-    E: std::error::Error,
+    E: ContextualError,
 {
+    fn error_context(self) -> ErrorContext {
+        match self {
+            Self::Internal(_) => ErrorContext::new("INTERNAL"),
+            Self::Expected(error) => error.error_context(),
+        }
+    }
+}
+
+impl<E> DomainError<E> {
     pub fn cast<F>(self) -> DomainError<F>
     where
-        F: std::error::Error + From<E>,
+        F: From<E>,
     {
         match self {
             DomainError::Expected(domain) => DomainError::Expected(F::from(domain)),
@@ -43,5 +49,11 @@ fn fmt_error_chain(error: &anyhow::Error, f: &mut fmt::Formatter<'_>) -> fmt::Re
 impl From<anyhow::Error> for InternalError {
     fn from(value: anyhow::Error) -> Self {
         DomainError::Internal(value)
+    }
+}
+
+impl ContextualError for Infallible {
+    fn error_context(self) -> ErrorContext {
+        match self {}
     }
 }

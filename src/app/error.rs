@@ -1,5 +1,9 @@
-use educe::Educe;
 pub(crate) use macros::*;
+
+use std::collections::HashMap;
+
+use educe::Educe;
+use serde::Serialize;
 
 use crate::domain::error::DomainError;
 
@@ -7,42 +11,66 @@ use super::validation::{ConversionFailure, ValidationErrors};
 
 pub type AppResult<I, O, E> = Result<O, AppError<I, E>>;
 
-#[derive(Educe, thiserror::Error)]
+pub trait ContextualError {
+    fn error_context(self) -> ErrorContext;
+}
+
+#[derive(Educe)]
 #[educe(Debug)]
-#[error("{kind}")]
-pub struct AppError<I, E>
-where
-    E: std::error::Error,
-{
+pub struct AppError<I, E> {
     #[educe(Debug(ignore))]
     pub input: I,
     pub kind: AppErrorKind<E>,
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum AppErrorKind<E>
-where
-    E: std::error::Error,
-{
-    #[error(transparent)]
+#[derive(Debug)]
+pub enum AppErrorKind<E> {
     Validation(ValidationErrors),
-    #[error(transparent)]
     Logical(DomainError<E>),
 }
 
-impl<E> AppErrorKind<E>
-where
-    E: std::error::Error,
-{
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ErrorContext {
+    error_code: &'static str,
+    args: Option<HashMap<&'static str, ErrorArgument>>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(untagged)]
+enum ErrorArgument {
+    Number(f64),
+}
+
+impl ErrorContext {
+    pub const fn new(error_code: &'static str) -> Self {
+        Self {
+            error_code,
+            args: None,
+        }
+    }
+
+    pub fn with_number(self, key: &'static str, value: impl Into<f64>) -> Self {
+        self.with_arg(key, ErrorArgument::Number(value.into()))
+    }
+
+    fn with_arg(self, key: &'static str, arg: ErrorArgument) -> Self {
+        let mut args = self.args.unwrap_or_default();
+        args.insert(key, arg);
+        Self {
+            error_code: self.error_code,
+            args: Some(args),
+        }
+    }
+}
+
+impl<E> AppErrorKind<E> {
     pub fn with_input<I>(self, input: I) -> AppError<I, E> {
         AppError { input, kind: self }
     }
 }
 
-impl<T, E> From<ConversionFailure<T>> for AppError<T, E>
-where
-    E: std::error::Error,
-{
+impl<T, E> From<ConversionFailure<T>> for AppError<T, E> {
     fn from(value: ConversionFailure<T>) -> Self {
         let ConversionFailure { input, errors } = value;
         let kind = AppErrorKind::Validation(errors);

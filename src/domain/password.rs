@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use educe::Educe;
 use secrecy::{ExposeSecret, SecretString};
 use sqlx::{
@@ -6,9 +5,10 @@ use sqlx::{
     Postgres, Type,
 };
 
-use crate::app::validation::{Validation, ValidationFailure};
-
-const PASSWORD: &str = "Password";
+use crate::app::{
+    error::ErrorContext,
+    validation::{Validation, ValidationFailure},
+};
 
 const MIN_LENGTH: usize = 8;
 const MAX_LENGTH: usize = 32;
@@ -28,27 +28,27 @@ impl TryFrom<SecretString> for Password {
         Validation::new(value)
             .check_or_else(
                 |v| v.expose_secret().len() >= MIN_LENGTH,
-                || anyhow!("{PASSWORD} must be at least {MIN_LENGTH} characters long"),
+                || ErrorContext::new("PASSWORD_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.expose_secret().len() <= MAX_LENGTH,
-                || anyhow!("{PASSWORD} must not exceed {MAX_LENGTH} characters"),
+                || ErrorContext::new("PASSWORD_TOO_LONG").with_number("max", MAX_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(char::is_lowercase),
-                || anyhow!("{PASSWORD} must contain at least one lowercase letter"),
+                || ErrorContext::new("PASSWORD_NO_LOWERCASE"),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(char::is_uppercase),
-                || anyhow!("{PASSWORD} must contain at least one uppercase letter"),
+                || ErrorContext::new("PASSWORD_NO_UPPERCASE"),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(|c| c.is_ascii_digit()),
-                || anyhow!("{PASSWORD} must contain at least one digit"),
+                || ErrorContext::new("PASSWORD_NO_DIGITS"),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(|c| c.is_ascii_punctuation()),
-                || anyhow!("{PASSWORD} must contain at least one special character"),
+                || ErrorContext::new("PASSWORD_NO_SPECIAL"),
             )
             .finish()
             .map(Self)

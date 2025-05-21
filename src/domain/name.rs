@@ -1,9 +1,9 @@
-use anyhow::anyhow;
 use educe::Educe;
 
-use crate::app::validation::{Validation, ValidationFailure};
-
-const NAME: &str = "Name";
+use crate::app::{
+    error::ErrorContext,
+    validation::{Validation, ValidationFailure},
+};
 
 const MIN_LENGTH: usize = 2;
 const MAX_LENGTH: usize = 50;
@@ -22,15 +22,15 @@ impl TryFrom<String> for Name {
         Validation::new(value)
             .check_or_else(
                 |v| v.len() >= MIN_LENGTH,
-                || anyhow!("{NAME} must be at least {MIN_LENGTH} characters long"),
+                || ErrorContext::new("NAME_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.len() <= MAX_LENGTH,
-                || anyhow!("{NAME} must not exceed {MAX_LENGTH} characters"),
+                || ErrorContext::new("NAME_TOO_LONG").with_number("max", MAX_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.chars().all(is_char_valid),
-                || anyhow!("{NAME} may only contain letters, hyphens, apostrophes and whitespace"),
+                || ErrorContext::new("NAME_INVALID_CHARS"),
             )
             .finish()
             .map(Self)

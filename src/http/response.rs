@@ -1,64 +1,109 @@
-use private::Never;
+use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
-use crate::app::validation::ValidationErrors;
+use crate::app::{
+    error::{AppError, AppErrorKind, ContextualError, ErrorContext},
+    validation::ValidationErrors,
+};
 
-pub type SuccessHttpResponse<T> = HttpResponse<Never, T, Never>;
+use super::error::HttpError;
 
-pub type ErrorHttpResponse<I> = HttpResponse<I, Never, ValidationErrors>;
-
-#[derive(Debug, Serialize)]
-#[serde(tag = "status", rename_all = "lowercase")]
-pub enum HttpResponse<I, O, V> {
-    Success { data: O },
-    Fail { input: I, data: V },
-    Error { input: I, message: String },
+pub trait ResponseContext {
+    fn with_body<F, R>(self, to_body: F) -> Response
+    where
+        F: FnOnce(HttpResponse) -> R,
+        R: IntoResponse;
 }
 
-pub type HttpResponseExtension = HttpResponse<OpaqueData, OpaqueData, OpaqueData>;
+#[derive(Serialize)]
+#[serde(tag = "status", rename_all = "lowercase")]
+pub enum HttpResponse {
+    Success {
+        data: OpaqueData,
+    },
+    Fail {
+        input: OpaqueData,
+        data: ValidationErrors,
+    },
+    Error {
+        input: OpaqueData,
+        data: ErrorContext,
+    },
+}
+
+pub struct Success<T>(pub T);
+
+pub struct Rejection<E>(pub E);
 
 #[derive(Serialize)]
 pub struct OpaqueData(Box<dyn erased_serde::Serialize + Send + Sync>);
 
-impl<I, O, V> HttpResponse<I, O, V>
+impl<T> ResponseContext for Success<T>
+where
+    T: Serialize + Send + Sync + 'static,
+{
+    fn with_body<F, R>(self, to_body: F) -> Response
+    where
+        F: FnOnce(HttpResponse) -> R,
+        R: IntoResponse,
+    {
+        let response = HttpResponse::Success {
+            data: OpaqueData(Box::new(self.0)),
+        };
+        to_body(response).into_response()
+    }
+}
+
+impl<E> ResponseContext for Rejection<E>
+where
+    E: HttpError + ContextualError,
+{
+    fn with_body<F, R>(self, to_body: F) -> Response
+    where
+        F: FnOnce(HttpResponse) -> R,
+        R: IntoResponse,
+    {
+        let error = self.0;
+        let status_code = error.status_code();
+        let response = HttpResponse::Error {
+            input: OpaqueData(Box::new(())),
+            data: error.error_context(),
+        };
+        let body = to_body(response).into_response();
+        (status_code, body).into_response()
+    }
+}
+
+impl<I, E> ResponseContext for AppError<I, E>
 where
     I: Serialize + Send + Sync + 'static,
-    O: Serialize + Send + Sync + 'static,
-    V: Serialize + Send + Sync + 'static,
+    AppError<I, E>: HttpError,
+    E: ContextualError,
 {
-    pub fn erase_types(self) -> HttpResponseExtension {
-        match self {
-            Self::Success { data } => HttpResponseExtension::Success {
-                data: OpaqueData(Box::new(data)),
+    fn with_body<F, R>(self, to_body: F) -> Response
+    where
+        F: FnOnce(HttpResponse) -> R,
+        R: IntoResponse,
+    {
+        let status_code = self.status_code();
+        let input = OpaqueData(Box::new(self.input));
+        let response = match self.kind {
+            AppErrorKind::Validation(errors) => HttpResponse::Fail {
+                input,
+                data: errors,
             },
-            Self::Fail { input, data } => HttpResponseExtension::Fail {
-                input: OpaqueData(Box::new(input)),
-                data: OpaqueData(Box::new(data)),
+            AppErrorKind::Logical(error) => HttpResponse::Error {
+                input,
+                data: error.error_context(),
             },
-            Self::Error { input, message } => HttpResponseExtension::Error {
-                input: OpaqueData(Box::new(input)),
-                message,
-            },
-        }
+        };
+        let body = to_body(response).into_response();
+        (status_code, body).into_response()
     }
 }
 
-impl<T> SuccessHttpResponse<T>
-where
-    T: Serialize,
-{
-    pub fn success(data: T) -> Self {
-        Self::Success { data }
-    }
-}
-
-impl Clone for HttpResponseExtension {
+impl Clone for HttpResponse {
     fn clone(&self) -> Self {
-        unreachable!("HTTP response extension may not be cloned")
+        unreachable!("HTTP response may not be cloned")
     }
-}
-
-mod private {
-    #[derive(serde::Serialize)]
-    pub enum Never {}
 }

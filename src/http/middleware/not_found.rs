@@ -1,10 +1,12 @@
-use crate::http::error::HttpError;
+use crate::{
+    app::error::{ContextualError, ErrorContext},
+    http::{error::HttpError, response::Rejection},
+};
 use axum::http::StatusCode;
 
 use super::view::View;
 
-#[derive(Debug, thiserror::Error)]
-#[error("Requested resourse was not found")]
+#[derive(Debug)]
 pub struct RouteNotFound;
 
 impl HttpError for RouteNotFound {
@@ -13,9 +15,15 @@ impl HttpError for RouteNotFound {
     }
 }
 
+impl ContextualError for RouteNotFound {
+    fn error_context(self) -> ErrorContext {
+        ErrorContext::new("NOT_FOUND")
+    }
+}
+
 #[tracing::instrument]
-pub async fn not_found_view() -> View<RouteNotFound> {
+pub async fn not_found_view() -> View<Rejection<RouteNotFound>> {
     let error = RouteNotFound;
     tracing::info!(?error);
-    View::error(error)
+    View::error(Rejection(error))
 }

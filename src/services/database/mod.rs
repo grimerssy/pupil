@@ -40,9 +40,6 @@ impl Database {
     }
 }
 
-fn sql_error<E>(error: sqlx::Error) -> DomainError<E>
-where
-    E: std::error::Error,
-{
+fn sql_error<E>(error: sqlx::Error) -> DomainError<E> {
     DomainError::Internal(anyhow::Error::from(error).context("execute sql query"))
 }

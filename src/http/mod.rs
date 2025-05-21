@@ -1,7 +1,7 @@
-pub use middleware::template::{TemplateRenderer, LanguageNegotiator};
+pub use middleware::template::{LanguageNegotiator, TemplateRenderer};
 
 use auth::auth_routes;
-use response::HttpResponse;
+use response::Success;
 use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
 use static_files::static_router;
 
@@ -9,10 +9,7 @@ use std::net::SocketAddr;
 
 use anyhow::Context;
 use axum::{routing::get, Router};
-use middleware::{
-    template::{SuccessTemplate, Template},
-    RouterExt,
-};
+use middleware::{template::Template, RouterExt};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use tokio::net::TcpListener;
@@ -51,8 +48,8 @@ fn root_router(ctx: AppContext) -> Router {
         .merge(static_router())
 }
 
-async fn index() -> SuccessTemplate<()> {
-    Template::new("index.html", HttpResponse::success(()))
+async fn index() -> Template<Success<()>> {
+    Template::new("index.html", Success(()))
 }
 
 fn serialize_secret<T, S>(secret: &SecretBox<T>, serializer: S) -> Result<S::Ok, S::Error>
