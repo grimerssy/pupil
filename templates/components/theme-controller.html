@@ -1,3 +1,7 @@
+{% set system = localize(key="system-theme", lang=lang) %}
+{% set light = localize(key="light-theme", lang=lang) %}
+{% set dark = localize(key="dark-theme", lang=lang) %}
+
 <div class="dropdown">
   <div tabindex="0" role="button" class="btn btn-ghost p-2">
     <svg
@@ -19,7 +23,7 @@
         type="radio"
         name="theme-dropdown"
         class="theme-controller btn btn-ghost w-full"
-        aria-label="System"
+        aria-label="{{ system }}"
         value="default"
       />
     </li>
@@ -28,7 +32,7 @@
         type="radio"
         name="theme-dropdown"
         class="theme-controller btn btn-ghost w-full"
-        aria-label="Light"
+        aria-label="{{ light }}"
         value="light"
       />
     </li>
@@ -37,7 +41,7 @@
         type="radio"
         name="theme-dropdown"
         class="theme-controller btn btn-ghost w-full"
-        aria-label="Dark"
+        aria-label="{{ dark }}"
         value="dark"
       />
     </li>
