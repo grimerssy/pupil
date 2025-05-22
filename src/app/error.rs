@@ -1,9 +1,9 @@
 pub(crate) use macros::*;
 
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 use educe::Educe;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::domain::error::DomainError;
 
@@ -29,25 +29,37 @@ pub enum AppErrorKind<E> {
     Logical(DomainError<E>),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ErrorContext {
-    error_code: &'static str,
-    args: Option<HashMap<&'static str, ErrorArgument>>,
+    error_code: Cow<'static, str>,
+    args: Option<HashMap<Cow<'static, str>, ErrorArgument>>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-enum ErrorArgument {
+pub enum ErrorArgument {
     Number(f64),
 }
 
 impl ErrorContext {
     pub const fn new(error_code: &'static str) -> Self {
+        let error_code = Cow::Borrowed(error_code);
         Self {
             error_code,
             args: None,
         }
+    }
+
+    pub fn error_code(&self) -> &str {
+        &self.error_code
+    }
+
+    pub fn args(&self) -> impl Iterator<Item = (&str, &ErrorArgument)> {
+        self.args
+            .iter()
+            .flat_map(|args| args.iter())
+            .map(|(key, value)| (key.as_ref(), value))
     }
 
     pub fn with_number(self, key: &'static str, value: impl Into<f64>) -> Self {
@@ -56,7 +68,7 @@ impl ErrorContext {
 
     fn with_arg(self, key: &'static str, arg: ErrorArgument) -> Self {
         let mut args = self.args.unwrap_or_default();
-        args.insert(key, arg);
+        args.insert(Cow::Borrowed(key), arg);
         Self {
             error_code: self.error_code,
             args: Some(args),

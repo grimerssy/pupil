@@ -1,13 +1,19 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::{anyhow, Context};
 use serde::{Deserialize, Serialize};
 use tera::Tera;
 use unic_langid::LanguageIdentifier;
 
-use crate::{domain::error::InternalError, http::TemplateRenderer};
+use crate::{app::error::ErrorContext, domain::error::InternalError, http::TemplateRenderer};
 
 static LOCALIZE_FUNCTION: &str = "localize";
+
+static LOCALIZE_ERROR_FUNCTION: &str = "localize_error";
+
+static ERROR: &str = "error";
+
+static KEY: &str = "key";
 
 pub trait TemplateLocalizer: Clone {
     fn reload(&mut self) -> Result<(), InternalError>;
@@ -37,6 +43,10 @@ impl<L> TemplatingEngine<L> {
             .ok_or_else(|| anyhow!("template path contains invalid unicode"))?;
         let mut tera = Tera::new(templates).context("construct tera renderer")?;
         tera.register_function(LOCALIZE_FUNCTION, localizer.clone().into_function());
+        tera.register_function(
+            LOCALIZE_ERROR_FUNCTION,
+            localize_error(localizer.clone().into_function()),
+        );
         Ok(Self { tera, localizer })
     }
 }
@@ -85,6 +95,26 @@ where
     Ok(html)
 }
 
+fn localize_error(localize: impl tera::Function) -> impl tera::Function {
+    move |args: &HashMap<_, _>| {
+        let mut args = args.clone();
+        let error = args
+            .remove(ERROR)
+            .ok_or_else(|| tera::Error::msg(format!("missing `{ERROR}` argument")))
+            .and_then(|json| ErrorContext::deserialize(json).map_err(tera::Error::msg))?;
+        let error_key = core::iter::once("error")
+            .chain(error.error_code().split('_'))
+            .map(|word| word.to_lowercase())
+            .collect::<Vec<_>>()
+            .join("-");
+        args.insert(KEY.to_owned(), serde_json::to_value(&error_key).unwrap());
+        for (key, value) in error.args() {
+            args.insert(key.to_owned(), serde_json::to_value(value).unwrap());
+        }
+        localize.call(&args)
+    }
+}
+
 #[cfg(debug_assertions)]
 fn reload_engine<L>(
     templating_engine: &TemplatingEngine<L>,
@@ -101,6 +131,10 @@ where
     templating_engine.tera.register_function(
         LOCALIZE_FUNCTION,
         templating_engine.localizer.clone().into_function(),
+    );
+    templating_engine.tera.register_function(
+        LOCALIZE_ERROR_FUNCTION,
+        localize_error(templating_engine.localizer.clone().into_function()),
     );
     Ok(templating_engine)
 }
