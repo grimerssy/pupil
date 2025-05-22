@@ -7,14 +7,15 @@
       class="fieldset bg-base-200 border-base-300 rounded-box w-md gap-5 border p-4"
     >
       <legend class="fieldset-legend text-lg">
-        {{ localize(key="signup", lang=lang) }}
+        {{ localize(key="signup", lang=locale) }}
       </legend>
       {{ form::input(context=context, field="name") }}
       {{ form::input(context=context, field="email") }}
       {{ form::input(context=context, field="password", type="password") }}
+      {% set signup_action = localize(key="signup-action", lang=locale) %}
       <input
         type="submit"
-        value="{{ localize(key="signup-action", lang=lang) }}"
+        value="{{ signup_action }}"
         class="btn btn-soft btn-primary mt-4"
       />
       {{ form::submission_error(context=context) }}

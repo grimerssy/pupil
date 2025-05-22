@@ -60,12 +60,12 @@ where
         &self,
         template_name: &str,
         data: T,
-        lang: &LanguageIdentifier,
+        locale: &LanguageIdentifier,
     ) -> Result<String, InternalError>
     where
         T: Serialize,
     {
-        render_template_with(self, template_name, data, lang)
+        render_template_with(self, template_name, data, locale)
     }
 }
 
@@ -73,7 +73,7 @@ fn render_template_with<T, L>(
     templating_engine: &TemplatingEngine<L>,
     template_name: &str,
     data: T,
-    lang: &LanguageIdentifier,
+    locale: &LanguageIdentifier,
 ) -> Result<String, InternalError>
 where
     T: Serialize,
@@ -86,7 +86,7 @@ where
         .map_err(InternalError::from)?;
     let mut tera_context = tera::Context::new();
     tera_context.insert("context", &context);
-    tera_context.insert("lang", lang);
+    tera_context.insert("locale", locale);
     let html = templating_engine
         .tera
         .render(template_name, &tera_context)

@@ -21,14 +21,14 @@ pub trait TemplateRenderer {
         &self,
         template_name: &str,
         data: T,
-        lang: &LanguageIdentifier,
+        locale: &LanguageIdentifier,
     ) -> Result<String, InternalError>
     where
         T: Serialize;
 }
 
-pub trait LanguageNegotiator {
-    fn negotiate_language(&self, sorted_preferences: Vec<LanguageIdentifier>)
+pub trait LocaleNegotiator {
+    fn negotiate_locale(&self, sorted_preferences: Vec<LanguageIdentifier>)
         -> LanguageIdentifier;
 }
 
@@ -89,8 +89,8 @@ pub(super) async fn render_template(
         .into_iter()
         .filter_map(|lang| lang.parse::<LanguageIdentifier>().ok())
         .collect::<Vec<_>>();
-    let lang = ctx.localizer.negotiate_language(language_preferences);
-    let html = match renderer.render_template(&template.meta.name, template.data, &lang) {
+    let locale = ctx.localizer.negotiate_locale(language_preferences);
+    let html = match renderer.render_template(&template.meta.name, template.data, &locale) {
         Ok(html) => html,
         Err(error) => {
             response = Template::error(Rejection(error)).into_response();
@@ -99,7 +99,7 @@ pub(super) async fn render_template(
                 .remove::<Template<HttpResponse>>()
                 .unwrap();
             renderer
-                .render_template(&template.meta.name, template.data, &lang)
+                .render_template(&template.meta.name, template.data, &locale)
                 .expect("render error template")
         }
     };

@@ -13,7 +13,7 @@ use serde::Deserialize;
 use unic_langid::LanguageIdentifier;
 use walkdir::WalkDir;
 
-use crate::{domain::error::InternalError, http::LanguageNegotiator};
+use crate::{domain::error::InternalError, http::LocaleNegotiator};
 
 use super::templating_engine::TemplateLocalizer;
 
@@ -68,11 +68,11 @@ impl Localizer {
 
     fn lookup(
         &self,
-        lang: &LanguageIdentifier,
+        locale: &LanguageIdentifier,
         text_id: &str,
         args: Option<&HashMap<Cow<'static, str>, FluentValue>>,
     ) -> Option<String> {
-        let bundle = self.bundles.get(lang)?;
+        let bundle = self.bundles.get(locale)?;
         let pattern = match text_id.split_once('.') {
             Some((msg, attr)) => bundle
                 .get_message(msg)?
@@ -91,20 +91,17 @@ impl Localizer {
         errors.is_empty().then(|| value.into())
     }
 
-    fn supported_languages(&self) -> impl Iterator<Item = &LanguageIdentifier> {
+    fn locales(&self) -> impl Iterator<Item = &LanguageIdentifier> {
         self.bundles.keys()
     }
 }
 
-impl LanguageNegotiator for Localizer {
-    fn negotiate_language(
-        &self,
-        sorted_preferences: Vec<LanguageIdentifier>,
-    ) -> LanguageIdentifier {
+impl LocaleNegotiator for Localizer {
+    fn negotiate_locale(&self, sorted_preferences: Vec<LanguageIdentifier>) -> LanguageIdentifier {
         sorted_preferences
             .into_iter()
             .filter_map(|preference| {
-                self.supported_languages()
+                self.locales()
                     .find(|supported| supported.language == preference.language)
             })
             .next()
@@ -116,14 +113,14 @@ impl LanguageNegotiator for Localizer {
 impl TemplateLocalizer for Arc<Localizer> {
     fn reload(&mut self) -> Result<(), InternalError> {
         let Localizer {
-            path: resource_path,
-            fallback: fallback_language,
+            path,
+            fallback,
             bundles: _,
         } = self.as_ref();
-        let bundles = Localizer::read_bundles(resource_path).context("reload localizer")?;
+        let bundles = Localizer::read_bundles(path).context("reload localizer")?;
         let localizer = Localizer {
-            path: resource_path.clone(),
-            fallback: fallback_language.clone(),
+            path: path.clone(),
+            fallback: fallback.clone(),
             bundles,
         };
         *self = Arc::new(localizer);
@@ -158,12 +155,12 @@ impl Loader for ArcLocalizer {
     }
 
     fn locales(&self) -> Box<dyn Iterator<Item = &LanguageIdentifier> + '_> {
-        Box::new(self.0.supported_languages())
+        Box::new(self.0.locales())
     }
 }
 
 fn bundle_from(
-    lang: LanguageIdentifier,
+    locale: LanguageIdentifier,
     path: PathBuf,
 ) -> anyhow::Result<FluentBundle<FluentResource>> {
     let resources = WalkDir::new(path)
@@ -176,7 +173,7 @@ fn bundle_from(
         .collect::<Result<Vec<_>, _>>()
         .map_err(|(_, errors)| errors.into_iter().next().expect("errors to not be empty"))
         .context("parse fluent resource")?;
-    let mut bundle = FluentBundle::new_concurrent(vec![lang.clone()]);
+    let mut bundle = FluentBundle::new_concurrent(vec![locale.clone()]);
     for resource in resources {
         bundle
             .add_resource(resource)

@@ -1,7 +1,3 @@
-{% set system = localize(key="system-theme", lang=lang) %}
-{% set light = localize(key="light-theme", lang=lang) %}
-{% set dark = localize(key="dark-theme", lang=lang) %}
-
 <div class="dropdown">
   <div tabindex="0" role="button" class="btn btn-ghost p-2">
     <svg
@@ -19,6 +15,7 @@
     class="dropdown-content bg-base-300 rounded-box z-1 p-2 shadow"
   >
     <li>
+      {% set system = localize(key="system-theme", lang=locale) %}
       <input
         type="radio"
         name="theme-dropdown"
@@ -28,6 +25,7 @@
       />
     </li>
     <li>
+      {% set light = localize(key="light-theme", lang=locale) %}
       <input
         type="radio"
         name="theme-dropdown"
@@ -37,6 +35,7 @@
       />
     </li>
     <li>
+      {% set dark = localize(key="dark-theme", lang=locale) %}
       <input
         type="radio"
         name="theme-dropdown"

@@ -2,14 +2,14 @@
   <nav class="navbar">
     <div class="navbar-start">
       <a href="/" class="btn btn-ghost text-xl">
-        {{ localize(key="app-title", lang=lang) }}
+        {{ localize(key="app-title", lang=locale) }}
       </a>
     </div>
     <div class="navbar-end">
       {% include "components/theme-controller.html" %}
       <div class="divider divider-horizontal"></div>
       <a href="/auth/signup" class="btn btn-ghost">
-        {{ localize(key="signup", lang=lang) }}
+        {{ localize(key="signup", lang=locale) }}
       </a>
     </div>
   </nav>
