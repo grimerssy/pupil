@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use super::prelude::*;
 
 define! {
@@ -21,4 +23,34 @@ define! {
     error SaveNewUserError = {
         EmailTaken,
     };
+
+    record LoginData = (maybe_email, maybe_password);
+
+    operation Login = async (LoginData) -> { AuthToken, LoginError };
+
+    error LoginError = {
+        (FindUserError),
+        (VerifyPasswordError),
+        (IssueTokenError),
+    };
+
+    record DatabaseUser = (db_user_id, email, password_hash, name);
+
+    operation FindUser = async (MaybeEmail) -> { DatabaseUser, FindUserError };
+
+    error FindUserError = {
+        NotFound
+    };
+
+    record PasswordClaim = (maybe_password, password_hash);
+
+    operation VerifyPassword = (PasswordClaim) -> { (), VerifyPasswordError };
+
+    error VerifyPasswordError = {
+        InvalidPassword
+    };
+
+    operation IssueToken = (UserId) -> { AuthToken, IssueTokenError };
+
+    error IssueTokenError = { };
 }

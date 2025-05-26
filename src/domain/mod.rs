@@ -3,13 +3,15 @@ pub mod auth;
 pub mod error;
 
 pub mod email;
+pub mod id;
 pub mod name;
 pub mod password;
+pub mod token;
 
 mod prelude {
     pub(super) use super::define;
 
-    pub use super::{email::*, name::*, password::*};
+    pub use super::{email::*, id::*, name::*, password::*, token::*};
 }
 
 macro_rules! define {
@@ -26,7 +28,7 @@ macro_rules! define {
     };
     (record $record:ident = ($( $field:ident ),* $(,)? );) => {
         ::paste::paste! {
-            #[derive(Debug, Clone)]
+            #[derive(Debug, Clone, ::sqlx::FromRow)]
             pub struct $record {
                 $(
                     pub $field: [<$field:camel>],
@@ -56,6 +58,7 @@ macro_rules! define {
     };
     (error $error:ident = { $( ($variant:ident) ),*  $(,)? };) => {
         #[derive(Debug)]
+        #[allow(clippy::enum_variant_names)]
         pub enum $error {
             $( $variant($variant), )*
         }

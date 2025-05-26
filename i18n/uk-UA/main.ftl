@@ -7,8 +7,10 @@ dark-theme = Темна
 welcome-message = Увійдіть щоб продовжити
 
 signup = Реєстрація
-
 signup-action = Зареєструватися
+
+login =  Вхід
+login-action = Увійти
 
 error-internal = Щось пішло не так
 

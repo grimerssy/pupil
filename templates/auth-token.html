@@ -1,0 +1,6 @@
+{% if context.status == "success" %}
+    <script type="text/javascript">
+      window.localStorage.setItem("accessToken", "{{ context.data.accessToken }}");
+      window.location.href = "/";
+    </script>
+{% endif %}

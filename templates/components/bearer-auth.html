@@ -1,0 +1,8 @@
+<script type="text/javascript">
+  document.addEventListener("htmx:configRequest", function (event) {
+    let token = window.localStorage.getItem("accessToken");
+    if (token) {
+      event.detail.headers["Authorization"] = `Bearer ${token}`;
+    }
+  });
+</script>

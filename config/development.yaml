@@ -11,11 +11,16 @@ database:
   password: postgres
   database: postgres
   require_ssl: false
+id:
+  secret: ""
 hasher:
   secret: ""
   memory_size: 16
   iterations: 1
   parallelism_factor: 1
   output_length: 32
+jwt:
+  ttl: 900
+  secret: ""
 templates:
   path: "templates/**/*.html"

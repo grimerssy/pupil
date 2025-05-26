@@ -1,15 +1,15 @@
 use anyhow::Context;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
-    Algorithm, Argon2, Params, Version,
+    Algorithm, Argon2, Params, PasswordVerifier, Version,
 };
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 
 use crate::domain::{
-    auth::{HashPassword, HashPasswordError},
+    auth::{HashPassword, HashPasswordError, PasswordClaim, VerifyPassword, VerifyPasswordError},
     error::{DomainError, DomainResult},
-    password::{Password, PasswordHash},
+    password::{MaybePassword, Password, PasswordHash},
 };
 
 #[derive(Clone, Debug, Deserialize)]
@@ -73,6 +73,20 @@ impl HashPassword for Hasher {
     }
 }
 
+impl VerifyPassword for Hasher {
+    #[tracing::instrument(skip(self))]
+    fn verify_password(
+        &self,
+        password_claim: PasswordClaim,
+    ) -> DomainResult<(), VerifyPasswordError> {
+        verify_password_with(
+            self,
+            password_claim.maybe_password,
+            password_claim.password_hash,
+        )
+    }
+}
+
 fn hash_password_with(
     hasher: &Hasher,
     password: Password,
@@ -86,4 +100,18 @@ fn hash_password_with(
         .map(|hash| PasswordHash::new(SecretString::from(hash.to_string())))
         .context("hash password")
         .map_err(DomainError::Internal)
+}
+
+fn verify_password_with(
+    hasher: &Hasher,
+    password: MaybePassword,
+    password_hash: PasswordHash,
+) -> DomainResult<(), VerifyPasswordError> {
+    let password_hash = argon2::PasswordHash::new(password_hash.expose_secret())
+        .context("parse stored password hash")
+        .map_err(DomainError::Internal)?;
+    hasher
+        .expect_argon()
+        .verify_password(password.expose_secret().as_bytes(), &password_hash)
+        .map_err(|_| DomainError::Expected(VerifyPasswordError::InvalidPassword))
 }

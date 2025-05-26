@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@fontsource-variable/geist-mono": "^5.2.5",
-    "@fontsource/geist-sans": "^5.2.5"
+    "@fontsource/geist-sans": "^5.2.5",
+    "htmx.org": "^2.0.4"
   }
 }

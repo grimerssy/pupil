@@ -21,6 +21,10 @@ pub struct Password(SecretString);
 #[educe(Into(SecretString))]
 pub struct PasswordHash(SecretString);
 
+#[derive(Educe, Clone, Debug)]
+#[educe(Into(SecretString))]
+pub struct MaybePassword(SecretString);
+
 impl TryFrom<SecretString> for Password {
     type Error = ValidationFailure<SecretString>;
 
@@ -55,7 +59,25 @@ impl TryFrom<SecretString> for Password {
     }
 }
 
+impl From<SecretString> for MaybePassword {
+    fn from(value: SecretString) -> Self {
+        Self(value)
+    }
+}
+
 impl ExposeSecret<str> for Password {
+    fn expose_secret(&self) -> &str {
+        self.0.expose_secret()
+    }
+}
+
+impl ExposeSecret<str> for PasswordHash {
+    fn expose_secret(&self) -> &str {
+        self.0.expose_secret()
+    }
+}
+
+impl ExposeSecret<str> for MaybePassword {
     fn expose_secret(&self) -> &str {
         self.0.expose_secret()
     }

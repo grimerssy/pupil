@@ -15,6 +15,11 @@ const MAX_LENGTH: usize = 50;
 #[sqlx(transparent)]
 pub struct Email(String);
 
+#[derive(Educe, Clone, Debug, sqlx::Type)]
+#[educe(Into(String))]
+#[sqlx(transparent)]
+pub struct MaybeEmail(String);
+
 impl TryFrom<String> for Email {
     type Error = ValidationFailure<String>;
 
@@ -30,5 +35,11 @@ impl TryFrom<String> for Email {
             )
             .finish()
             .map(Self)
+    }
+}
+
+impl From<String> for MaybeEmail {
+    fn from(value: String) -> Self {
+        Self(value)
     }
 }

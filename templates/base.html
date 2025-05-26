@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Pupil app</title>
     <script defer src="/static/main.js"></script>
+    {% include "components/bearer-auth.html" %}
     <link href="/static/main.css" rel="stylesheet" />
   </head>
-  <body class="flex min-h-screen flex-col">
+  <body hx-boost="true" class="flex min-h-screen flex-col">
     {% include "components/header.html" %}
     <div class="flex grow">
       <div class="m-auto">
