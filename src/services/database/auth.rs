@@ -51,7 +51,7 @@ async fn find_user_with(
 ) -> DomainResult<DatabaseUser, FindUserError> {
     sqlx::query_as(
         "
-        select id as db_user_id, email, password_hash, name
+        select id as db_user_id, password_hash
         from users
         where email = $1
         ",
