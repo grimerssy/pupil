@@ -1,12 +1,10 @@
 use crate::{
     app::error::log_result,
     domain::{
-        auth::{
-            FindUser, HashPassword, IssueToken, Login, LoginData, LoginError, NewUser,
-            PasswordClaim, SaveNewUser, Signup, SignupData, SignupError, VerifyPassword,
-        },
         error::{DomainError, DomainResult},
         id::{Cipher, UserId},
+        login::{FindUser, IssueToken, Login, LoginData, LoginError, VerifyPassword},
+        signup::{HashPassword, NewUser, SaveNewUser, Signup, SignupData, SignupError},
         token::AuthToken,
     },
 };
@@ -76,7 +74,9 @@ async fn signup_with(
         name,
         password,
     } = signup_data;
-    let password_hash = hasher.hash_password(password).map_err(DomainError::cast)?;
+    let password_hash = hasher
+        .hash_password(&password)
+        .map_err(DomainError::from_internal)?;
     let new_user = NewUser {
         email,
         name,
@@ -96,16 +96,14 @@ async fn login_with(
     login_data: LoginData,
 ) -> DomainResult<AuthToken, LoginError> {
     let user = storage
-        .find_user(login_data.maybe_email)
+        .find_user(&login_data.email)
         .await
         .map_err(DomainError::cast)?;
-    let password_claim = PasswordClaim {
-        maybe_password: login_data.maybe_password,
-        password_hash: user.password_hash,
-    };
     verifier
-        .verify_password(password_claim)
+        .verify_password(login_data.password, user.password_hash)
         .map_err(DomainError::cast)?;
     let user_id = UserId::new(user.db_user_id, cipher.cipher());
-    issuer.issue_token(user_id).map_err(DomainError::cast)
+    issuer
+        .issue_token(user_id)
+        .map_err(DomainError::from_internal)
 }

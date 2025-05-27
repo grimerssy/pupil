@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds};
 
 use crate::domain::{
-    auth::{IssueToken, IssueTokenError},
-    error::{DomainError, DomainResult},
+    login::IssueToken,
+    error::{DomainError, InternalError},
     id::UserId,
     token::AuthToken,
 };
@@ -41,7 +41,7 @@ impl TokenIssuer {
 }
 
 impl IssueToken for TokenIssuer {
-    fn issue_token(&self, user_id: UserId) -> DomainResult<AuthToken, IssueTokenError> {
+    fn issue_token(&self, user_id: UserId) -> Result<AuthToken, InternalError> {
         let now = get_current_timestamp();
         let claims = TokenClaims {
             iat: now,

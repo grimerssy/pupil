@@ -15,7 +15,8 @@ use crate::{
         AppContext,
     },
     domain::{
-        auth::{LoginData, LoginError, SaveNewUserError, SignupData, SignupError},
+        login::{LoginData, LoginError},
+        signup::{SignupData, SignupError},
         token::AuthToken,
     },
 };
@@ -75,10 +76,7 @@ pub async fn handle_signup(
 impl HttpError for SignupError {
     fn status_code(&self) -> StatusCode {
         match self {
-            Self::HashPasswordError(error) => match *error {},
-            Self::SaveNewUserError(error) => match error {
-                SaveNewUserError::EmailTaken => StatusCode::CONFLICT,
-            },
+            Self::EmailTaken => StatusCode::CONFLICT,
         }
     }
 }
@@ -129,8 +127,8 @@ impl TryFrom<LoginForm> for LoginData {
 
     fn try_from(value: LoginForm) -> Result<Self, Self::Error> {
         Ok(Self {
-            maybe_email: value.email.into(),
-            maybe_password: value.password.into(),
+            email: value.email.into(),
+            password: value.password.into(),
         })
     }
 }

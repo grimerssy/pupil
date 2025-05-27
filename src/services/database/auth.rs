@@ -1,5 +1,6 @@
 use crate::domain::{
-    auth::{DatabaseUser, FindUser, FindUserError, NewUser, SaveNewUser, SaveNewUserError},
+    login::{DatabaseUser, FindUser, FindUserError},
+    signup::{NewUser, SaveNewUser, SaveNewUserError},
     email::MaybeEmail,
     error::{DomainError, DomainResult},
 };
@@ -15,8 +16,8 @@ impl SaveNewUser for Database {
 
 impl FindUser for Database {
     #[tracing::instrument(skip(self))]
-    async fn find_user(&self, email: MaybeEmail) -> DomainResult<DatabaseUser, FindUserError> {
-        find_user_with(self, &email).await
+    async fn find_user(&self, email: &MaybeEmail) -> DomainResult<DatabaseUser, FindUserError> {
+        find_user_with(self, email).await
     }
 }
 
@@ -39,7 +40,7 @@ async fn save_new_user_with(
     .await
     {
         Err(sqlx::Error::Database(error)) if error.is_unique_violation() => {
-            Err(DomainError::Expected(SaveNewUserError::EmailTaken))
+            Err(DomainError::Expected(SaveNewUserError::EmailConflict))
         }
         result => result.map(|_| ()).map_err(sql_error),
     }

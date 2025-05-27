@@ -28,6 +28,7 @@ where
     }
 }
 
+// TODO?
 impl<E> DomainError<E> {
     pub fn cast<F>(self) -> DomainError<F>
     where
@@ -36,6 +37,13 @@ impl<E> DomainError<E> {
         match self {
             DomainError::Expected(domain) => DomainError::Expected(F::from(domain)),
             DomainError::Internal(internal) => DomainError::Internal(internal),
+        }
+    }
+
+    pub fn from_internal(error: InternalError) -> Self {
+        match error {
+            DomainError::Expected(never) => match never {},
+            DomainError::Internal(error) => Self::Internal(error),
         }
     }
 }

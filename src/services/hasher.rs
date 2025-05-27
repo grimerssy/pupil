@@ -7,8 +7,9 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 
 use crate::domain::{
-    auth::{HashPassword, HashPasswordError, PasswordClaim, VerifyPassword, VerifyPasswordError},
-    error::{DomainError, DomainResult},
+    login::{VerifyPassword, VerifyPasswordError},
+    signup::HashPassword,
+    error::{DomainError, DomainResult, InternalError},
     password::{MaybePassword, Password, PasswordHash},
 };
 
@@ -68,7 +69,7 @@ impl Hasher {
 
 impl HashPassword for Hasher {
     #[tracing::instrument(skip(self))]
-    fn hash_password(&self, password: Password) -> DomainResult<PasswordHash, HashPasswordError> {
+    fn hash_password(&self, password: &Password) -> Result<PasswordHash, InternalError> {
         hash_password_with(self, password)
     }
 }
@@ -77,20 +78,14 @@ impl VerifyPassword for Hasher {
     #[tracing::instrument(skip(self))]
     fn verify_password(
         &self,
-        password_claim: PasswordClaim,
+        password: MaybePassword,
+        password_hash: PasswordHash,
     ) -> DomainResult<(), VerifyPasswordError> {
-        verify_password_with(
-            self,
-            password_claim.maybe_password,
-            password_claim.password_hash,
-        )
+        verify_password_with(self, password, password_hash)
     }
 }
 
-fn hash_password_with(
-    hasher: &Hasher,
-    password: Password,
-) -> DomainResult<PasswordHash, HashPasswordError> {
+fn hash_password_with(hasher: &Hasher, password: &Password) -> Result<PasswordHash, InternalError> {
     hasher
         .expect_argon()
         .hash_password(
