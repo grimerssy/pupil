@@ -4,10 +4,14 @@ use crate::{
 };
 
 use super::{
-    email::{Email, MaybeEmail}, id::{DbUserId, UserId}, name::Name, password::{MaybePassword, Password, PasswordHash}, token::AuthToken
+    email::{Email, MaybeEmail},
+    id::{DbUserId, UserId},
+    name::Name,
+    password::{MaybePassword, Password, PasswordHash},
+    token::AuthToken,
 };
 
-#[derive(Debug, Clone, ::sqlx::FromRow)]
+#[derive(Debug, Clone)]
 pub struct SignupData {
     pub email: Email,
     pub password: Password,
@@ -58,7 +62,7 @@ impl ContextualError for HashPasswordError {
     }
 }
 
-#[derive(Debug, Clone, ::sqlx::FromRow)]
+#[derive(Debug, Clone)]
 pub struct NewUser {
     pub email: Email,
     pub password_hash: PasswordHash,
@@ -82,7 +86,7 @@ impl ContextualError for SaveNewUserError {
     }
 }
 
-#[derive(Debug, Clone, ::sqlx::FromRow)]
+#[derive(Debug, Clone)]
 pub struct LoginData {
     pub maybe_email: MaybeEmail,
     pub maybe_password: MaybePassword,
@@ -128,7 +132,7 @@ impl ContextualError for LoginError {
     }
 }
 
-#[derive(Debug, Clone, ::sqlx::FromRow)]
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct DatabaseUser {
     pub db_user_id: DbUserId,
     pub password_hash: PasswordHash,
@@ -151,8 +155,7 @@ impl ContextualError for FindUserError {
     }
 }
 
-// TODO remove sqlx
-#[derive(Debug, Clone, ::sqlx::FromRow)]
+#[derive(Debug, Clone)]
 pub struct PasswordClaim {
     pub maybe_password: MaybePassword,
     pub password_hash: PasswordHash,
