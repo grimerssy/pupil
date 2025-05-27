@@ -8,7 +8,12 @@
     {% include "components/bearer-auth.html" %}
     <link href="/static/main.css" rel="stylesheet" />
   </head>
-  <body hx-boost="true" class="flex min-h-screen flex-col">
+  <body
+    hx-boost="true"
+    hx-ext="response-targets"
+    hx-target-error="body"
+    class="flex min-h-screen flex-col"
+  >
     {% include "components/header.html" %}
     <div class="flex grow">
       <div class="m-auto">

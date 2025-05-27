@@ -15,3 +15,5 @@ login-action = Login
 error-internal = An unexpected error occurred
 
 error-not-found = Requested resourse was not found
+
+error-invalid-password = Invalid login or password

@@ -15,3 +15,5 @@ login-action = Увійти
 error-internal = Щось пішло не так
 
 error-not-found = Запитаний ресурс не знайдено
+
+error-invalid-password = Невірний логін або пароль
