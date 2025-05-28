@@ -7,7 +7,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 
 use crate::domain::{
-    error::{DomainError, DomainResult, InternalError},
+    error::{DomainError, InternalError},
     login::{VerifyPassword, VerifyPasswordError},
     password::{MaybePassword, Password, PasswordHash},
     signup::HashPassword,
@@ -80,7 +80,7 @@ impl VerifyPassword for Hasher {
         &self,
         password: MaybePassword,
         password_hash: PasswordHash,
-    ) -> DomainResult<(), VerifyPasswordError> {
+    ) -> Result<(), DomainError<VerifyPasswordError>> {
         verify_password_with(self, password, password_hash)
     }
 }
@@ -101,7 +101,7 @@ fn verify_password_with(
     hasher: &Hasher,
     password: MaybePassword,
     password_hash: PasswordHash,
-) -> DomainResult<(), VerifyPasswordError> {
+) -> Result<(), DomainError<VerifyPasswordError>> {
     let password_hash = argon2::PasswordHash::new(password_hash.expose_secret())
         .context("parse stored password hash")
         .map_err(DomainError::Internal)?;

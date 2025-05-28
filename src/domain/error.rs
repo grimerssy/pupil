@@ -5,8 +5,6 @@ use educe::Educe;
 
 use crate::app::error::{ContextualError, ErrorContext};
 
-pub type DomainResult<T, E> = core::result::Result<T, DomainError<E>>;
-
 pub type InternalError = DomainError<Infallible>;
 
 #[derive(Educe)]
@@ -28,7 +26,6 @@ where
     }
 }
 
-// TODO?
 impl<E> DomainError<E> {
     pub fn cast<F>(self) -> DomainError<F>
     where

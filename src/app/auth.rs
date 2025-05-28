@@ -1,7 +1,7 @@
 use crate::{
     app::error::log_result,
     domain::{
-        error::{DomainError, DomainResult},
+        error::DomainError,
         id::{Cipher, UserId},
         login::{FindUser, IssueToken, Login, LoginData, LoginError, VerifyPassword},
         signup::{HashPassword, NewUser, SaveNewUser, Signup, SignupData, SignupError},
@@ -10,13 +10,13 @@ use crate::{
 };
 
 use super::{
-    error::{AppError, AppErrorKind, AppResult},
+    error::{AppError, AppErrorKind},
     validation::ConversionFailure,
     AppContext,
 };
 
 #[tracing::instrument(skip(ctx))]
-pub async fn signup<T>(ctx: &AppContext, form: T) -> AppResult<T, (), SignupError>
+pub async fn signup<T>(ctx: &AppContext, form: T) -> Result<(), AppError<T, SignupError>>
 where
     T: Clone + core::fmt::Debug,
     SignupData: TryFrom<T, Error = ConversionFailure<T>>,
@@ -31,7 +31,7 @@ where
 }
 
 #[tracing::instrument(skip(ctx))]
-pub async fn login<T>(ctx: &AppContext, form: T) -> AppResult<T, AuthToken, LoginError>
+pub async fn login<T>(ctx: &AppContext, form: T) -> Result<AuthToken, AppError<T, LoginError>>
 where
     T: Clone + core::fmt::Debug,
     LoginData: TryFrom<T, Error = ConversionFailure<T>>,
@@ -46,13 +46,13 @@ where
 }
 
 impl Signup for AppContext {
-    async fn signup(&self, signup_data: SignupData) -> DomainResult<(), SignupError> {
+    async fn signup(&self, signup_data: SignupData) -> Result<(), DomainError<SignupError>> {
         signup_with(&self.hasher, &self.database, signup_data).await
     }
 }
 
 impl Login for AppContext {
-    async fn login(&self, login_data: LoginData) -> DomainResult<AuthToken, LoginError> {
+    async fn login(&self, login_data: LoginData) -> Result<AuthToken, DomainError<LoginError>> {
         login_with(
             &self.database,
             &self.hasher,
@@ -68,7 +68,7 @@ async fn signup_with(
     hasher: &impl HashPassword,
     storage: &impl SaveNewUser,
     signup_data: SignupData,
-) -> DomainResult<(), SignupError> {
+) -> Result<(), DomainError<SignupError>> {
     let SignupData {
         email,
         name,
@@ -94,7 +94,7 @@ async fn login_with(
     cipher: &impl Cipher,
     issuer: &impl IssueToken,
     login_data: LoginData,
-) -> DomainResult<AuthToken, LoginError> {
+) -> Result<AuthToken, DomainError<LoginError>> {
     let user = storage
         .find_user(&login_data.email)
         .await

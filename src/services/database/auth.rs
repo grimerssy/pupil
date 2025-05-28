@@ -1,6 +1,6 @@
 use crate::domain::{
     email::MaybeEmail,
-    error::{DomainError, DomainResult},
+    error::DomainError,
     login::{DatabaseUser, FindUser, FindUserError},
     signup::{NewUser, SaveNewUser, SaveNewUserError},
 };
@@ -9,14 +9,17 @@ use super::{sql_error, Database};
 
 impl SaveNewUser for Database {
     #[tracing::instrument(skip(self))]
-    async fn save_new_user(&self, new_user: NewUser) -> DomainResult<(), SaveNewUserError> {
+    async fn save_new_user(&self, new_user: NewUser) -> Result<(), DomainError<SaveNewUserError>> {
         save_new_user_with(self, new_user).await
     }
 }
 
 impl FindUser for Database {
     #[tracing::instrument(skip(self))]
-    async fn find_user(&self, email: &MaybeEmail) -> DomainResult<DatabaseUser, FindUserError> {
+    async fn find_user(
+        &self,
+        email: &MaybeEmail,
+    ) -> Result<DatabaseUser, DomainError<FindUserError>> {
         find_user_with(self, email).await
     }
 }
@@ -24,7 +27,7 @@ impl FindUser for Database {
 async fn save_new_user_with(
     db: &Database,
     new_user: NewUser,
-) -> DomainResult<(), SaveNewUserError> {
+) -> Result<(), DomainError<SaveNewUserError>> {
     match sqlx::query(
         "
         insert into users
@@ -49,7 +52,7 @@ async fn save_new_user_with(
 async fn find_user_with(
     db: &Database,
     email: &MaybeEmail,
-) -> DomainResult<DatabaseUser, FindUserError> {
+) -> Result<DatabaseUser, DomainError<FindUserError>> {
     sqlx::query_as(
         "
         select id as db_user_id, password_hash

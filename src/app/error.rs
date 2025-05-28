@@ -9,8 +9,6 @@ use crate::domain::error::DomainError;
 
 use super::validation::{ConversionFailure, ValidationErrors};
 
-pub type AppResult<I, O, E> = Result<O, AppError<I, E>>;
-
 pub trait ContextualError {
     fn error_context(self) -> ErrorContext;
 }
