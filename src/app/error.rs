@@ -2,6 +2,8 @@ use std::{borrow::Cow, collections::HashMap, convert::Infallible};
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::ErrorKind;
+
 use super::validation::ValidationErrors;
 
 pub trait ContextualError {
@@ -78,9 +80,9 @@ where
     E: ContextualError,
 {
     fn error_context(self) -> ErrorContext {
-        match self {
-            Self::Internal(_) => ErrorContext::new("INTERNAL"),
-            Self::Expected(error) => error.error_context(),
+        match self.kind {
+            ErrorKind::Internal(_) => ErrorContext::new("INTERNAL"),
+            ErrorKind::Expected(error) => error.error_context(),
         }
     }
 }

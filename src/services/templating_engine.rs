@@ -82,16 +82,14 @@ where
     #[cfg(debug_assertions)]
     let templating_engine = reload_engine(templating_engine)?;
     let context = serde_json::to_value(data)
-        .context("serialize template context")
-        .map_err(crate::Error::Internal)?;
+        .context("serialize template context")?;
     let mut tera_context = tera::Context::new();
     tera_context.insert("context", &context);
     tera_context.insert("locale", locale);
     let html = templating_engine
         .tera
         .render(template_name, &tera_context)
-        .context("render template")
-        .map_err(crate::Error::Internal)?;
+        .context("render template")?;
     Ok(html)
 }
 
@@ -116,9 +114,7 @@ fn localize_error(localize: impl tera::Function) -> impl tera::Function {
 }
 
 #[cfg(debug_assertions)]
-fn reload_engine<L>(
-    templating_engine: &TemplatingEngine<L>,
-) -> crate::Result<TemplatingEngine<L>>
+fn reload_engine<L>(templating_engine: &TemplatingEngine<L>) -> crate::Result<TemplatingEngine<L>>
 where
     L: TemplateLocalizer + 'static,
 {

@@ -43,13 +43,13 @@ impl IssueToken for TokenIssuer {
             exp: now + self.config.ttl.as_secs(),
             user_id,
         };
-        jsonwebtoken::encode(
+        let token = jsonwebtoken::encode(
             &Header::default(),
             &claims,
             &EncodingKey::from_secret(self.config.secret.expose_secret().as_bytes()),
         )
         .map(AuthToken::new)
-        .context("encode jwt")
-        .map_err(crate::Error::Internal)
+        .context("encode jwt")?;
+        Ok(token)
     }
 }

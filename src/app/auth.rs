@@ -13,25 +13,25 @@ use super::{validation::ValidationErrors, AppContext};
 #[tracing::instrument(skip(ctx))]
 pub async fn signup<T>(ctx: &AppContext, form: T) -> crate::Result<(), AppError<SignupError>>
 where
-    T: Clone + core::fmt::Debug,
-    SignupData: TryFrom<T, Error = ValidationErrors>,
+    T: core::fmt::Debug + TryInto<SignupData, Error = ValidationErrors>,
 {
-    let signup_data = SignupData::try_from(form.clone())
+    let signup_data = form
+        .try_into()
         .map_err(AppError::Validation)
-        .map_err(crate::Error::Expected)?;
+        .map_err(crate::Error::expected)?;
     ctx.signup(signup_data).await.map_err(crate::Error::cast)
 }
 
 #[tracing::instrument(skip(ctx))]
 pub async fn login<T>(ctx: &AppContext, form: T) -> crate::Result<AuthToken, AppError<LoginError>>
 where
-    T: Clone + core::fmt::Debug,
-    LoginData: TryFrom<T, Error = ValidationErrors>,
+    T: core::fmt::Debug + TryInto<LoginData, Error = ValidationErrors>,
 {
-    let login_data = LoginData::try_from(form.clone())
+    let data = form
+        .try_into()
         .map_err(AppError::Validation)
-        .map_err(crate::Error::Expected)?;
-    ctx.login(login_data).await.map_err(crate::Error::cast)
+        .map_err(crate::Error::expected)?;
+    ctx.login(data).await.map_err(crate::Error::cast)
 }
 
 impl Signup for AppContext {

@@ -16,7 +16,7 @@ pub fn catch_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
         anyhow!("unknown panic message")
     }
     .context("catch panic");
-    let error = <crate::Error>::Internal(error);
+    let error = <crate::Error>::internal(error);
     tracing::error!(?error);
     View::new(TemplateName::error(), Rejection(error)).into_response()
 }

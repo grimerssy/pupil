@@ -39,7 +39,7 @@ async fn save_new_user_with(
     .await
     {
         Err(sqlx::Error::Database(error)) if error.is_unique_violation() => {
-            Err(crate::Error::Expected(SaveNewUserError::EmailConflict))
+            Err(crate::Error::expected(SaveNewUserError::EmailConflict))
         }
         result => result.map(|_| ()).map_err(sql_error),
     }
@@ -60,5 +60,5 @@ async fn find_user_with(
     .fetch_optional(&db.pool)
     .await
     .map_err(sql_error)?
-    .ok_or(crate::Error::Expected(FindUserError::NotFound))
+    .ok_or(crate::Error::expected(FindUserError::NotFound))
 }

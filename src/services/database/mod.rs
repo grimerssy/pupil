@@ -39,5 +39,5 @@ impl Database {
 }
 
 fn sql_error<E>(error: sqlx::Error) -> crate::Error<E> {
-    crate::Error::Internal(anyhow::Error::from(error).context("execute sql query"))
+    crate::Error::internal(anyhow::Error::from(error).context("execute sql query"))
 }

@@ -85,15 +85,15 @@ impl VerifyPassword for Hasher {
 }
 
 fn hash_password_with(hasher: &Hasher, password: &Password) -> crate::Result<PasswordHash> {
-    hasher
+    let hash = hasher
         .expect_argon()
         .hash_password(
             password.expose_secret().as_bytes(),
             &SaltString::generate(&mut OsRng),
         )
         .map(|hash| PasswordHash::new(SecretString::from(hash.to_string())))
-        .context("hash password")
-        .map_err(crate::Error::Internal)
+        .context("hash password")?;
+    Ok(hash)
 }
 
 fn verify_password_with(
@@ -102,10 +102,9 @@ fn verify_password_with(
     password_hash: PasswordHash,
 ) -> crate::Result<(), VerifyPasswordError> {
     let password_hash = argon2::PasswordHash::new(password_hash.expose_secret())
-        .context("parse stored password hash")
-        .map_err(crate::Error::Internal)?;
+        .context("parse stored password hash")?;
     hasher
         .expect_argon()
         .verify_password(password.expose_secret().as_bytes(), &password_hash)
-        .map_err(|_| crate::Error::Expected(VerifyPasswordError::InvalidPassword))
+        .map_err(|_| crate::Error::expected(VerifyPasswordError::InvalidPassword))
 }

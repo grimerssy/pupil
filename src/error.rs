@@ -3,37 +3,64 @@ use std::convert::Infallible;
 
 use educe::Educe;
 
-pub type Result<T, E = Infallible> = core::result::Result<T, Error<E>>;
+pub type Result<T, E = Infallible, I = ()> = core::result::Result<T, Error<E, I>>;
+
+#[derive(Debug)]
+pub struct Error<E = Infallible, I = ()> {
+    pub input: I,
+    pub kind: ErrorKind<E>,
+}
 
 #[derive(Educe)]
 #[educe(Debug)]
-pub enum Error<E = Infallible> {
+pub enum ErrorKind<E> {
     Expected(E),
     Internal(#[educe(Debug(method(fmt_error_chain)))] anyhow::Error),
 }
 
 impl<E> Error<E> {
-    pub fn cast<F>(self) -> Error<F>
+    pub fn expected(error: E) -> Self {
+        let kind = ErrorKind::Expected(error);
+        Error { input: (), kind }
+    }
+
+    pub fn internal(error: anyhow::Error) -> Error<E> {
+        let kind = ErrorKind::Internal(error);
+        Error { input: (), kind }
+    }
+
+    pub fn with_input<I>(self, input: I) -> Error<E, I> {
+        let kind = self.kind;
+        Error { input, kind }
+    }
+}
+
+impl<E, I> Error<E, I> {
+    pub fn cast<F>(self) -> Error<F, I>
     where
         E: Into<F>,
     {
-        match self {
-            Self::Expected(error) => Error::Expected(error.into()),
-            Self::Internal(internal) => Error::Internal(internal),
-        }
+        let input = self.input;
+        let kind = match self.kind {
+            ErrorKind::Expected(error) => ErrorKind::Expected(error.into()),
+            ErrorKind::Internal(internal) => ErrorKind::Internal(internal),
+        };
+        Error { input, kind }
     }
 
-    pub fn from_internal(error: Error) -> Self {
-        match error {
-            Error::Expected(never) => match never {},
-            Error::Internal(error) => Self::Internal(error),
-        }
+    pub fn from_internal(error: Error<Infallible, I>) -> Self {
+        let input = error.input;
+        let kind = match error.kind {
+            ErrorKind::Expected(never) => match never {},
+            ErrorKind::Internal(error) => ErrorKind::Internal(error),
+        };
+        Self { input, kind }
     }
 }
 
 impl<E> From<anyhow::Error> for Error<E> {
     fn from(value: anyhow::Error) -> Self {
-        Self::Internal(value)
+        Self::internal(value)
     }
 }
 
