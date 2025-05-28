@@ -2,7 +2,7 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 use crate::app::{
-    error::{AppError, AppErrorKind, ContextualError, ErrorContext},
+    error::{AppError, ContextualError, ErrorContext},
     validation::ValidationErrors,
 };
 
@@ -74,10 +74,10 @@ where
     }
 }
 
-impl<I, E> ResponseContext for AppError<I, E>
+impl<I, E> ResponseContext for crate::error::Rejection<I, AppError<E>>
 where
+    Self: HttpError,
     I: Serialize + Send + Sync + 'static,
-    AppError<I, E>: HttpError,
     E: ContextualError,
 {
     fn with_body<F, R>(self, to_body: F) -> Response
@@ -87,12 +87,12 @@ where
     {
         let status_code = self.status_code();
         let input = OpaqueData(Box::new(self.input));
-        let response = match self.kind {
-            AppErrorKind::Validation(errors) => HttpResponse::Fail {
+        let response = match self.error {
+            AppError::Validation(errors) => HttpResponse::Fail {
                 input,
                 data: errors,
             },
-            AppErrorKind::Logical(error) => HttpResponse::Error {
+            AppError::Logical(error) => HttpResponse::Error {
                 input,
                 data: error.error_context(),
             },

@@ -20,12 +20,6 @@ pub struct ValidationFailure<I> {
     pub errors: Vec<ErrorContext>,
 }
 
-#[derive(Debug, Serialize)]
-pub struct ConversionFailure<I> {
-    pub input: I,
-    pub errors: ValidationErrors,
-}
-
 #[derive(Educe, Default, Serialize)]
 #[educe(Debug)]
 pub struct ValidationErrors(
@@ -102,14 +96,15 @@ mod macros {
                 )*
                 Ok($dest { $( $field, )* })
             } else {
-                $(
-                    let $field = match $field {
-                        Ok(wrapper) => wrapper.into(),
-                        Err(raw) => raw,
-                    };
-                )*
-                let input = $src { $( $field, )* };
-                Err($crate::app::validation::ConversionFailure{ input, errors })
+                // TODO
+                // $(
+                //     let $field = match $field {
+                //         Ok(wrapper) => wrapper.into(),
+                //         Err(raw) => raw,
+                //     };
+                // )*
+                // let input = $src { $( $field, )* };
+                Err(errors)
             }
         }};
     }

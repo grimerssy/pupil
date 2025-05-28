@@ -5,6 +5,7 @@ pub mod prelude {
 mod app;
 mod config;
 mod domain;
+mod error;
 mod http;
 mod services;
 mod telemetry;

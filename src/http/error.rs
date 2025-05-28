@@ -2,23 +2,20 @@ use std::convert::Infallible;
 
 use axum::http::StatusCode;
 
-use crate::{
-    app::error::{AppError, AppErrorKind},
-    domain::error::DomainError,
-};
+use crate::{app::error::AppError, domain::error::DomainError};
 
 pub trait HttpError {
     fn status_code(&self) -> StatusCode;
 }
 
-impl<I, E> HttpError for AppError<I, E>
+impl<E> HttpError for AppError<E>
 where
     E: HttpError,
 {
     fn status_code(&self) -> StatusCode {
-        match &self.kind {
-            AppErrorKind::Validation(_) => StatusCode::UNPROCESSABLE_ENTITY,
-            AppErrorKind::Logical(error) => error.status_code(),
+        match &self {
+            AppError::Validation(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            AppError::Logical(error) => error.status_code(),
         }
     }
 }
@@ -38,5 +35,14 @@ where
 impl HttpError for Infallible {
     fn status_code(&self) -> StatusCode {
         match *self {}
+    }
+}
+
+impl<I, E> HttpError for crate::error::Rejection<I, E>
+where
+    E: HttpError,
+{
+    fn status_code(&self) -> StatusCode {
+        self.error.status_code()
     }
 }

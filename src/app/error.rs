@@ -2,27 +2,18 @@ pub(crate) use macros::*;
 
 use std::{borrow::Cow, collections::HashMap};
 
-use educe::Educe;
 use serde::{Deserialize, Serialize};
 
 use crate::domain::error::DomainError;
 
-use super::validation::{ConversionFailure, ValidationErrors};
+use super::validation::ValidationErrors;
 
 pub trait ContextualError {
     fn error_context(self) -> ErrorContext;
 }
 
-#[derive(Educe)]
-#[educe(Debug)]
-pub struct AppError<I, E> {
-    #[educe(Debug(ignore))]
-    pub input: I,
-    pub kind: AppErrorKind<E>,
-}
-
 #[derive(Debug)]
-pub enum AppErrorKind<E> {
+pub enum AppError<E> {
     Validation(ValidationErrors),
     Logical(DomainError<E>),
 }
@@ -74,26 +65,12 @@ impl ErrorContext {
     }
 }
 
-impl<E> AppErrorKind<E> {
-    pub fn with_input<I>(self, input: I) -> AppError<I, E> {
-        AppError { input, kind: self }
-    }
-}
-
-impl<T, E> From<ConversionFailure<T>> for AppError<T, E> {
-    fn from(value: ConversionFailure<T>) -> Self {
-        let ConversionFailure { input, errors } = value;
-        let kind = AppErrorKind::Validation(errors);
-        Self { input, kind }
-    }
-}
-
 mod macros {
     macro_rules! log_error {
         ($error:expr) => {{
-            use $crate::app::error::AppErrorKind as AE;
+            use $crate::app::error::AppError as AE;
             use $crate::domain::error::DomainError as DE;
-            match &$error.kind {
+            match &$error {
                 AE::Validation(errors) => ::tracing::info!(?errors),
                 AE::Logical(DE::Expected(error)) => ::tracing::info!(?error),
                 AE::Logical(DE::Internal(error)) => ::tracing::error!(?error),

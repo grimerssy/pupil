@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     app::{
         auth::{login, signup},
-        validation::{try_convert, ConversionFailure},
+        validation::{try_convert, ValidationErrors},
         AppContext,
     },
     domain::{
@@ -19,6 +19,7 @@ use crate::{
         signup::{SignupData, SignupError},
         token::AuthToken,
     },
+    error::Rejection,
 };
 
 use super::{
@@ -67,10 +68,13 @@ pub async fn handle_signup(
     State(ctx): State<AppContext>,
     Form(form): Form<SignupForm>,
 ) -> Result<Redirect, ErrorView<SignupForm, SignupError>> {
+    let input = form.clone();
     signup(&ctx, form)
         .await
         .map(|_| Redirect::to("/"))
-        .map_err(|error| View::new(SIGNUP_PAGE, error))
+        // TODO probably
+        .map_err(|error| Rejection { input, error })
+        .map_err(|rejection| View::new(SIGNUP_PAGE, rejection))
 }
 
 impl HttpError for SignupError {
@@ -98,10 +102,13 @@ pub async fn handle_login(
     State(ctx): State<AppContext>,
     Form(form): Form<LoginForm>,
 ) -> Result<View<Success<LoginResponse>>, ErrorView<LoginForm, LoginError>> {
+    let input = form.clone();
     login(&ctx, form)
         .await
         .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, Success(LoginResponse { access_token })))
-        .map_err(|error| View::new(LOGIN_PAGE, error))
+        // TODO probably
+        .map_err(|error| Rejection { input, error })
+        .map_err(|rejection| View::new(LOGIN_PAGE, rejection))
 }
 
 impl HttpError for LoginError {
@@ -111,7 +118,7 @@ impl HttpError for LoginError {
 }
 
 impl TryFrom<SignupForm> for SignupData {
-    type Error = ConversionFailure<SignupForm>;
+    type Error = ValidationErrors;
 
     fn try_from(value: SignupForm) -> Result<Self, Self::Error> {
         try_convert!(SignupForm value => SignupData {
@@ -123,7 +130,7 @@ impl TryFrom<SignupForm> for SignupData {
 }
 
 impl TryFrom<LoginForm> for LoginData {
-    type Error = ConversionFailure<LoginForm>;
+    type Error = ValidationErrors;
 
     fn try_from(value: LoginForm) -> Result<Self, Self::Error> {
         Ok(Self {
