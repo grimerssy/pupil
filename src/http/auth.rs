@@ -19,7 +19,6 @@ use crate::{
         signup::{SignupData, SignupError},
         token::AuthToken,
     },
-    error::Rejection,
 };
 
 use super::{
@@ -67,13 +66,11 @@ pub struct SignupForm {
 pub async fn handle_signup(
     State(ctx): State<AppContext>,
     Form(form): Form<SignupForm>,
-) -> Result<Redirect, ErrorView<SignupForm, SignupError>> {
-    let input = form.clone();
+) -> Result<Redirect, ErrorView<SignupError>> {
     signup(&ctx, form)
         .await
         .map(|_| Redirect::to("/"))
-        .map_err(|error| Rejection { input, error })
-        .map_err(|rejection| View::new(SIGNUP_PAGE, rejection))
+        .map_err(|error| View::new(SIGNUP_PAGE, error))
 }
 
 impl HttpError for SignupError {
@@ -100,13 +97,11 @@ pub struct LoginResponse {
 pub async fn handle_login(
     State(ctx): State<AppContext>,
     Form(form): Form<LoginForm>,
-) -> Result<View<Success<LoginResponse>>, ErrorView<LoginForm, LoginError>> {
-    let input = form.clone();
+) -> Result<View<Success<LoginResponse>>, ErrorView<LoginError>> {
     login(&ctx, form)
         .await
         .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, Success(LoginResponse { access_token })))
-        .map_err(|error| Rejection { input, error })
-        .map_err(|rejection| View::new(LOGIN_PAGE, rejection))
+        .map_err(|error| View::new(LOGIN_PAGE, error))
 }
 
 impl HttpError for LoginError {

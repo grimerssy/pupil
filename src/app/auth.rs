@@ -1,5 +1,5 @@
 use crate::{
-    app::error::{log_result, AppError},
+    app::error::AppError,
     domain::{
         id::{Cipher, UserId},
         login::{FindUser, IssueToken, Login, LoginData, LoginError, VerifyPassword},
@@ -11,27 +11,27 @@ use crate::{
 use super::{validation::ValidationErrors, AppContext};
 
 #[tracing::instrument(skip(ctx))]
-pub async fn signup<T>(ctx: &AppContext, form: T) -> Result<(), AppError<SignupError>>
+pub async fn signup<T>(ctx: &AppContext, form: T) -> crate::Result<(), AppError<SignupError>>
 where
     T: Clone + core::fmt::Debug,
     SignupData: TryFrom<T, Error = ValidationErrors>,
 {
-    log_result!(async {
-        let signup_data = SignupData::try_from(form.clone()).map_err(AppError::Validation)?;
-        ctx.signup(signup_data).await.map_err(AppError::Logical)
-    })
+    let signup_data = SignupData::try_from(form.clone())
+        .map_err(AppError::Validation)
+        .map_err(crate::Error::Expected)?;
+    ctx.signup(signup_data).await.map_err(crate::Error::cast)
 }
 
 #[tracing::instrument(skip(ctx))]
-pub async fn login<T>(ctx: &AppContext, form: T) -> Result<AuthToken, AppError<LoginError>>
+pub async fn login<T>(ctx: &AppContext, form: T) -> crate::Result<AuthToken, AppError<LoginError>>
 where
     T: Clone + core::fmt::Debug,
     LoginData: TryFrom<T, Error = ValidationErrors>,
 {
-    log_result!(async {
-        let login_data = LoginData::try_from(form.clone()).map_err(AppError::Validation)?;
-        ctx.login(login_data).await.map_err(AppError::Logical)
-    })
+    let login_data = LoginData::try_from(form.clone())
+        .map_err(AppError::Validation)
+        .map_err(crate::Error::Expected)?;
+    ctx.login(login_data).await.map_err(crate::Error::cast)
 }
 
 impl Signup for AppContext {

@@ -1,5 +1,3 @@
-pub(crate) use macros::*;
-
 use std::{borrow::Cow, collections::HashMap, convert::Infallible};
 
 use serde::{Deserialize, Serialize};
@@ -13,8 +11,13 @@ pub trait ContextualError {
 #[derive(Debug)]
 pub enum AppError<E> {
     Validation(ValidationErrors),
-    // BIG TODO
-    Logical(crate::Error<E>),
+    Logical(E),
+}
+
+impl<E> From<E> for AppError<E> {
+    fn from(value: E) -> Self {
+        Self::Logical(value)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -80,44 +83,4 @@ where
             Self::Expected(error) => error.error_context(),
         }
     }
-}
-
-mod macros {
-    macro_rules! log_error {
-        ($error:expr) => {{
-            // BIG TODO
-            use $crate::app::error::AppError as AE;
-            use $crate::Error as DE;
-            match &$error {
-                AE::Validation(errors) => ::tracing::info!(?errors),
-                AE::Logical(DE::Expected(error)) => ::tracing::info!(?error),
-                AE::Logical(DE::Internal(error)) => ::tracing::error!(?error),
-            }
-        }};
-    }
-
-    macro_rules! log_result {
-        (async $result:block) => {{
-            #[allow(clippy::redundant_closure_call)]
-            let result = (async || { $result })().await;
-            $crate::app::error::log_result!(result)
-        }};
-        ($result:block) => {{
-            #[allow(clippy::redundant_closure_call)]
-            let result = (|| { $result })();
-            $crate::app::error::log_result!(result)
-        }};
-        ($result:expr) => {{
-            let result = $result;
-            match &result {
-                Ok(success) => ::tracing::info!(return = ?success),
-                Err(error) => {
-                    $crate::app::error::log_error!(error);
-                },
-            }
-            result
-        }};
-    }
-
-    pub(crate) use {log_error, log_result};
 }

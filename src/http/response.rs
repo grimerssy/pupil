@@ -74,10 +74,9 @@ where
     }
 }
 
-impl<I, E> ResponseContext for crate::error::Rejection<I, AppError<E>>
+impl<E> ResponseContext for AppError<E>
 where
     Self: HttpError,
-    I: Serialize + Send + Sync + 'static,
     E: ContextualError,
 {
     fn with_body<F, R>(self, to_body: F) -> Response
@@ -86,8 +85,10 @@ where
         R: IntoResponse,
     {
         let status_code = self.status_code();
-        let input = OpaqueData(Box::new(self.input));
-        let response = match self.error {
+        // TODO
+        let input = ();
+        let input = OpaqueData(Box::new(input));
+        let response = match self {
             AppError::Validation(errors) => HttpResponse::Fail {
                 input,
                 data: errors,
@@ -99,6 +100,19 @@ where
         };
         let body = to_body(response).into_response();
         (status_code, body).into_response()
+    }
+}
+
+impl<E> ResponseContext for crate::Error<E>
+where
+    E: ResponseContext,
+{
+    fn with_body<F, R>(self, to_body: F) -> Response
+    where
+        F: FnOnce(HttpResponse) -> R,
+        R: IntoResponse,
+    {
+        todo!()
     }
 }
 

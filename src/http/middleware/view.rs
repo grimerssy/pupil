@@ -9,12 +9,12 @@ use axum::{
 use mime::{APPLICATION_JSON, TEXT_HTML};
 
 use crate::{
-    app::error::AppError, error::Rejection, http::response::{HttpResponse, ResponseContext}
+    app::error::AppError, http::response::{HttpResponse, ResponseContext}
 };
 
 use super::template::{Template, TemplateName};
 
-pub type ErrorView<I, E> = View<Rejection<I, AppError<E>>>;
+pub type ErrorView<E> = View<crate::Error<AppError<E>>>;
 
 #[derive(Clone, Debug)]
 pub struct View<T> {

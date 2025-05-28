@@ -12,15 +12,10 @@ pub enum Error<E = Infallible> {
     Internal(#[educe(Debug(method(fmt_error_chain)))] anyhow::Error),
 }
 
-pub struct Rejection<I, E> {
-    pub input: I,
-    pub error: E,
-}
-
 impl<E> Error<E> {
     pub fn cast<F>(self) -> Error<F>
     where
-        E: Into<F>
+        E: Into<F>,
     {
         match self {
             Self::Expected(error) => Error::Expected(error.into()),
