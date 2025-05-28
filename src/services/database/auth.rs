@@ -1,8 +1,8 @@
 use crate::domain::{
-    login::{DatabaseUser, FindUser, FindUserError},
-    signup::{NewUser, SaveNewUser, SaveNewUserError},
     email::MaybeEmail,
     error::{DomainError, DomainResult},
+    login::{DatabaseUser, FindUser, FindUserError},
+    signup::{NewUser, SaveNewUser, SaveNewUserError},
 };
 
 use super::{sql_error, Database};

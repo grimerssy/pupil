@@ -7,10 +7,10 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 
 use crate::domain::{
-    login::{VerifyPassword, VerifyPasswordError},
-    signup::HashPassword,
     error::{DomainError, DomainResult, InternalError},
+    login::{VerifyPassword, VerifyPasswordError},
     password::{MaybePassword, Password, PasswordHash},
+    signup::HashPassword,
 };
 
 #[derive(Clone, Debug, Deserialize)]

@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds};
 
 use crate::domain::{
-    login::IssueToken,
     error::{DomainError, InternalError},
     id::UserId,
+    login::IssueToken,
     token::AuthToken,
 };
 
