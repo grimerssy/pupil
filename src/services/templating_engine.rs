@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use tera::Tera;
 use unic_langid::LanguageIdentifier;
 
-use crate::{app::error::ErrorContext, domain::error::InternalError, http::TemplateRenderer};
+use crate::{app::error::ErrorContext, http::TemplateRenderer};
 
 static LOCALIZE_FUNCTION: &str = "localize";
 
@@ -16,7 +16,7 @@ static ERROR: &str = "error";
 static KEY: &str = "key";
 
 pub trait TemplateLocalizer: Clone {
-    fn reload(&mut self) -> Result<(), InternalError>;
+    fn reload(&mut self) -> crate::Result<()>;
 
     fn into_function(self) -> impl tera::Function;
 }
@@ -61,7 +61,7 @@ where
         template_name: &str,
         data: T,
         locale: &LanguageIdentifier,
-    ) -> Result<String, InternalError>
+    ) -> crate::Result<String>
     where
         T: Serialize,
     {
@@ -74,7 +74,7 @@ fn render_template_with<T, L>(
     template_name: &str,
     data: T,
     locale: &LanguageIdentifier,
-) -> Result<String, InternalError>
+) -> crate::Result<String>
 where
     T: Serialize,
     L: TemplateLocalizer + 'static,
@@ -83,7 +83,7 @@ where
     let templating_engine = reload_engine(templating_engine)?;
     let context = serde_json::to_value(data)
         .context("serialize template context")
-        .map_err(InternalError::from)?;
+        .map_err(crate::Error::Internal)?;
     let mut tera_context = tera::Context::new();
     tera_context.insert("context", &context);
     tera_context.insert("locale", locale);
@@ -91,7 +91,7 @@ where
         .tera
         .render(template_name, &tera_context)
         .context("render template")
-        .map_err(InternalError::from)?;
+        .map_err(crate::Error::Internal)?;
     Ok(html)
 }
 
@@ -118,7 +118,7 @@ fn localize_error(localize: impl tera::Function) -> impl tera::Function {
 #[cfg(debug_assertions)]
 fn reload_engine<L>(
     templating_engine: &TemplatingEngine<L>,
-) -> Result<TemplatingEngine<L>, InternalError>
+) -> crate::Result<TemplatingEngine<L>>
 where
     L: TemplateLocalizer + 'static,
 {

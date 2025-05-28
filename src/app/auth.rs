@@ -1,7 +1,6 @@
 use crate::{
     app::error::{log_result, AppError},
     domain::{
-        error::DomainError,
         id::{Cipher, UserId},
         login::{FindUser, IssueToken, Login, LoginData, LoginError, VerifyPassword},
         signup::{HashPassword, NewUser, SaveNewUser, Signup, SignupData, SignupError},
@@ -36,13 +35,13 @@ where
 }
 
 impl Signup for AppContext {
-    async fn signup(&self, signup_data: SignupData) -> Result<(), DomainError<SignupError>> {
+    async fn signup(&self, signup_data: SignupData) -> crate::Result<(), SignupError> {
         signup_with(&self.hasher, &self.database, signup_data).await
     }
 }
 
 impl Login for AppContext {
-    async fn login(&self, login_data: LoginData) -> Result<AuthToken, DomainError<LoginError>> {
+    async fn login(&self, login_data: LoginData) -> crate::Result<AuthToken, LoginError> {
         login_with(
             &self.database,
             &self.hasher,
@@ -58,7 +57,7 @@ async fn signup_with(
     hasher: &impl HashPassword,
     storage: &impl SaveNewUser,
     signup_data: SignupData,
-) -> Result<(), DomainError<SignupError>> {
+) -> crate::Result<(), SignupError> {
     let SignupData {
         email,
         name,
@@ -66,7 +65,7 @@ async fn signup_with(
     } = signup_data;
     let password_hash = hasher
         .hash_password(&password)
-        .map_err(DomainError::from_internal)?;
+        .map_err(crate::Error::from_internal)?;
     let new_user = NewUser {
         email,
         name,
@@ -75,7 +74,7 @@ async fn signup_with(
     storage
         .save_new_user(new_user)
         .await
-        .map_err(DomainError::cast)
+        .map_err(crate::Error::cast)
 }
 
 async fn login_with(
@@ -84,16 +83,16 @@ async fn login_with(
     cipher: &impl Cipher,
     issuer: &impl IssueToken,
     login_data: LoginData,
-) -> Result<AuthToken, DomainError<LoginError>> {
+) -> crate::Result<AuthToken, LoginError> {
     let user = storage
         .find_user(&login_data.email)
         .await
-        .map_err(DomainError::cast)?;
+        .map_err(crate::Error::cast)?;
     verifier
         .verify_password(login_data.password, user.password_hash)
-        .map_err(DomainError::cast)?;
+        .map_err(crate::Error::cast)?;
     let user_id = UserId::new(user.db_user_id, cipher.cipher());
     issuer
         .issue_token(user_id)
-        .map_err(DomainError::from_internal)
+        .map_err(crate::Error::from_internal)
 }

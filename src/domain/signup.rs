@@ -6,18 +6,16 @@ use crate::domain::{
     password::{Password, PasswordHash},
 };
 
-use super::error::{DomainError, InternalError};
-
 pub trait Signup {
-    async fn signup(&self, signup_data: SignupData) -> Result<(), DomainError<SignupError>>;
+    async fn signup(&self, signup_data: SignupData) -> crate::Result<(), SignupError>;
 }
 
 pub trait HashPassword {
-    fn hash_password(&self, password: &Password) -> Result<PasswordHash, InternalError>;
+    fn hash_password(&self, password: &Password) -> crate::Result<PasswordHash>;
 }
 
 pub trait SaveNewUser {
-    async fn save_new_user(&self, user: NewUser) -> Result<(), DomainError<SaveNewUserError>>;
+    async fn save_new_user(&self, user: NewUser) -> crate::Result<(), SaveNewUserError>;
 }
 
 #[derive(Debug, Clone)]

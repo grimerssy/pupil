@@ -96,14 +96,6 @@ mod macros {
                 )*
                 Ok($dest { $( $field, )* })
             } else {
-                // TODO
-                // $(
-                //     let $field = match $field {
-                //         Ok(wrapper) => wrapper.into(),
-                //         Err(raw) => raw,
-                //     };
-                // )*
-                // let input = $src { $( $field, )* };
                 Err(errors)
             }
         }};

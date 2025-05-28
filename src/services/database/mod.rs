@@ -2,8 +2,6 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
 
-use crate::domain::error::DomainError;
-
 mod auth;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -40,6 +38,6 @@ impl Database {
     }
 }
 
-fn sql_error<E>(error: sqlx::Error) -> DomainError<E> {
-    DomainError::Internal(anyhow::Error::from(error).context("execute sql query"))
+fn sql_error<E>(error: sqlx::Error) -> crate::Error<E> {
+    crate::Error::Internal(anyhow::Error::from(error).context("execute sql query"))
 }

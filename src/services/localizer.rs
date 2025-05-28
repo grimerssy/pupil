@@ -13,7 +13,7 @@ use serde::Deserialize;
 use unic_langid::LanguageIdentifier;
 use walkdir::WalkDir;
 
-use crate::{domain::error::InternalError, http::LocaleNegotiator};
+use crate::http::LocaleNegotiator;
 
 use super::templating_engine::TemplateLocalizer;
 
@@ -111,7 +111,7 @@ impl LocaleNegotiator for Localizer {
 }
 
 impl TemplateLocalizer for Arc<Localizer> {
-    fn reload(&mut self) -> Result<(), InternalError> {
+    fn reload(&mut self) -> crate::Result<()> {
         let Localizer {
             path,
             fallback,

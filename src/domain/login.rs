@@ -1,25 +1,18 @@
-use crate::{
-    app::error::{ContextualError, ErrorContext},
-    domain::error::DomainError,
-};
+use crate::app::error::{ContextualError, ErrorContext};
 
 use crate::domain::{
     email::MaybeEmail,
-    error::InternalError,
     id::{DbUserId, UserId},
     password::{MaybePassword, PasswordHash},
     token::AuthToken,
 };
 
 pub trait Login {
-    async fn login(&self, login_data: LoginData) -> Result<AuthToken, DomainError<LoginError>>;
+    async fn login(&self, login_data: LoginData) -> crate::Result<AuthToken, LoginError>;
 }
 
 pub trait FindUser {
-    async fn find_user(
-        &self,
-        email: &MaybeEmail,
-    ) -> Result<DatabaseUser, DomainError<FindUserError>>;
+    async fn find_user(&self, email: &MaybeEmail) -> crate::Result<DatabaseUser, FindUserError>;
 }
 
 pub trait VerifyPassword {
@@ -27,11 +20,11 @@ pub trait VerifyPassword {
         &self,
         password: MaybePassword,
         password_hash: PasswordHash,
-    ) -> Result<(), DomainError<VerifyPasswordError>>;
+    ) -> crate::Result<(), VerifyPasswordError>;
 }
 
 pub trait IssueToken {
-    fn issue_token(&self, user_id: UserId) -> Result<AuthToken, InternalError>;
+    fn issue_token(&self, user_id: UserId) -> crate::Result<AuthToken>;
 }
 
 #[derive(Debug, Clone)]

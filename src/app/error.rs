@@ -1,10 +1,8 @@
 pub(crate) use macros::*;
 
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, convert::Infallible};
 
 use serde::{Deserialize, Serialize};
-
-use crate::domain::error::DomainError;
 
 use super::validation::ValidationErrors;
 
@@ -15,7 +13,8 @@ pub trait ContextualError {
 #[derive(Debug)]
 pub enum AppError<E> {
     Validation(ValidationErrors),
-    Logical(DomainError<E>),
+    // BIG TODO
+    Logical(crate::Error<E>),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -65,11 +64,30 @@ impl ErrorContext {
     }
 }
 
+impl ContextualError for Infallible {
+    fn error_context(self) -> ErrorContext {
+        match self {}
+    }
+}
+
+impl<E> ContextualError for crate::Error<E>
+where
+    E: ContextualError,
+{
+    fn error_context(self) -> ErrorContext {
+        match self {
+            Self::Internal(_) => ErrorContext::new("INTERNAL"),
+            Self::Expected(error) => error.error_context(),
+        }
+    }
+}
+
 mod macros {
     macro_rules! log_error {
         ($error:expr) => {{
+            // BIG TODO
             use $crate::app::error::AppError as AE;
-            use $crate::domain::error::DomainError as DE;
+            use $crate::Error as DE;
             match &$error {
                 AE::Validation(errors) => ::tracing::info!(?errors),
                 AE::Logical(DE::Expected(error)) => ::tracing::info!(?error),

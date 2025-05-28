@@ -6,12 +6,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds};
 
-use crate::domain::{
-    error::{DomainError, InternalError},
-    id::UserId,
-    login::IssueToken,
-    token::AuthToken,
-};
+use crate::domain::{id::UserId, login::IssueToken, token::AuthToken};
 
 #[serde_as]
 #[derive(Clone, Debug, Deserialize)]
@@ -41,7 +36,7 @@ impl TokenIssuer {
 }
 
 impl IssueToken for TokenIssuer {
-    fn issue_token(&self, user_id: UserId) -> Result<AuthToken, InternalError> {
+    fn issue_token(&self, user_id: UserId) -> crate::Result<AuthToken> {
         let now = get_current_timestamp();
         let claims = TokenClaims {
             iat: now,
@@ -55,6 +50,6 @@ impl IssueToken for TokenIssuer {
         )
         .map(AuthToken::new)
         .context("encode jwt")
-        .map_err(DomainError::Internal)
+        .map_err(crate::Error::Internal)
     }
 }

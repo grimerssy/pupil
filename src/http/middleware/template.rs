@@ -12,7 +12,6 @@ use unic_langid::LanguageIdentifier;
 
 use crate::{
     app::AppContext,
-    domain::error::InternalError,
     http::response::{HttpResponse, Rejection, ResponseContext},
 };
 
@@ -22,7 +21,7 @@ pub trait TemplateRenderer {
         template_name: &str,
         data: T,
         locale: &LanguageIdentifier,
-    ) -> Result<String, InternalError>
+    ) -> crate::Result<String>
     where
         T: Serialize;
 }

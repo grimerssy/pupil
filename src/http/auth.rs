@@ -72,7 +72,6 @@ pub async fn handle_signup(
     signup(&ctx, form)
         .await
         .map(|_| Redirect::to("/"))
-        // TODO probably
         .map_err(|error| Rejection { input, error })
         .map_err(|rejection| View::new(SIGNUP_PAGE, rejection))
 }
@@ -106,7 +105,6 @@ pub async fn handle_login(
     login(&ctx, form)
         .await
         .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, Success(LoginResponse { access_token })))
-        // TODO probably
         .map_err(|error| Rejection { input, error })
         .map_err(|rejection| View::new(LOGIN_PAGE, rejection))
 }

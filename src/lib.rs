@@ -9,3 +9,5 @@ mod error;
 mod http;
 mod services;
 mod telemetry;
+
+use error::{Error, Result};

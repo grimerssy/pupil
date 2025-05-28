@@ -7,7 +7,6 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 
 use crate::domain::{
-    error::{DomainError, InternalError},
     login::{VerifyPassword, VerifyPasswordError},
     password::{MaybePassword, Password, PasswordHash},
     signup::HashPassword,
@@ -69,7 +68,7 @@ impl Hasher {
 
 impl HashPassword for Hasher {
     #[tracing::instrument(skip(self))]
-    fn hash_password(&self, password: &Password) -> Result<PasswordHash, InternalError> {
+    fn hash_password(&self, password: &Password) -> crate::Result<PasswordHash> {
         hash_password_with(self, password)
     }
 }
@@ -80,12 +79,12 @@ impl VerifyPassword for Hasher {
         &self,
         password: MaybePassword,
         password_hash: PasswordHash,
-    ) -> Result<(), DomainError<VerifyPasswordError>> {
+    ) -> crate::Result<(), VerifyPasswordError> {
         verify_password_with(self, password, password_hash)
     }
 }
 
-fn hash_password_with(hasher: &Hasher, password: &Password) -> Result<PasswordHash, InternalError> {
+fn hash_password_with(hasher: &Hasher, password: &Password) -> crate::Result<PasswordHash> {
     hasher
         .expect_argon()
         .hash_password(
@@ -94,19 +93,19 @@ fn hash_password_with(hasher: &Hasher, password: &Password) -> Result<PasswordHa
         )
         .map(|hash| PasswordHash::new(SecretString::from(hash.to_string())))
         .context("hash password")
-        .map_err(DomainError::Internal)
+        .map_err(crate::Error::Internal)
 }
 
 fn verify_password_with(
     hasher: &Hasher,
     password: MaybePassword,
     password_hash: PasswordHash,
-) -> Result<(), DomainError<VerifyPasswordError>> {
+) -> crate::Result<(), VerifyPasswordError> {
     let password_hash = argon2::PasswordHash::new(password_hash.expose_secret())
         .context("parse stored password hash")
-        .map_err(DomainError::Internal)?;
+        .map_err(crate::Error::Internal)?;
     hasher
         .expect_argon()
         .verify_password(password.expose_secret().as_bytes(), &password_hash)
-        .map_err(|_| DomainError::Expected(VerifyPasswordError::InvalidPassword))
+        .map_err(|_| crate::Error::Expected(VerifyPasswordError::InvalidPassword))
 }
