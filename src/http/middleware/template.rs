@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Deref};
 
 use axum::{
     extract::{Request, State},
@@ -28,47 +28,30 @@ pub trait TemplateRenderer {
 }
 
 pub trait LocaleNegotiator {
-    fn negotiate_locale(&self, sorted_preferences: Vec<LanguageIdentifier>)
-        -> LanguageIdentifier;
+    fn negotiate_locale(&self, sorted_preferences: Vec<LanguageIdentifier>) -> LanguageIdentifier;
 }
 
 #[derive(Clone, Debug)]
 pub struct Template<T> {
-    meta: TemplateMeta,
+    template_name: TemplateName,
     data: T,
 }
 
-pub(super) type TemplateName = Cow<'static, str>;
-
 #[derive(Clone, Debug)]
-pub struct TemplateMeta {
-    name: TemplateName,
-}
+pub struct TemplateName(Cow<'static, str>);
 
 impl<T> Template<T> {
     pub fn new(template_name: impl Into<TemplateName>, data: T) -> Self {
-        let meta = TemplateMeta::new(template_name);
-        Self::with_meta(meta, data)
-    }
-
-    pub fn error(error: T) -> Self {
-        let meta = TemplateMeta::error();
-        Self::with_meta(meta, error)
-    }
-
-    pub fn with_meta(meta: TemplateMeta, data: T) -> Self {
-        Self { meta, data }
+        Self {
+            template_name: template_name.into(),
+            data,
+        }
     }
 }
 
-impl TemplateMeta {
-    pub fn new(name: impl Into<TemplateName>) -> Self {
-        let name = name.into();
-        Self { name }
-    }
-
+impl TemplateName {
     pub fn error() -> Self {
-        Self::new("error.html")
+        Self::from("error.html")
     }
 }
 
@@ -90,16 +73,16 @@ pub(super) async fn render_template(
         .filter_map(|lang| lang.parse::<LanguageIdentifier>().ok())
         .collect::<Vec<_>>();
     let locale = ctx.localizer.negotiate_locale(language_preferences);
-    let html = match renderer.render_template(&template.meta.name, template.data, &locale) {
+    let html = match renderer.render_template(&template.template_name, template.data, &locale) {
         Ok(html) => html,
         Err(error) => {
-            response = Template::error(Rejection(error)).into_response();
+            response = Template::new(TemplateName::error(), Rejection(error)).into_response();
             let template = response
                 .extensions_mut()
                 .remove::<Template<HttpResponse>>()
                 .unwrap();
             renderer
-                .render_template(&template.meta.name, template.data, &locale)
+                .render_template(&template.template_name, template.data, &locale)
                 .expect("render error template")
         }
     };
@@ -119,6 +102,23 @@ where
 {
     fn into_response(self) -> Response {
         self.data
-            .with_body(|response| Template::with_meta(self.meta, response))
+            .with_body(|response| Template::new(self.template_name, response))
+    }
+}
+
+impl<T> From<T> for TemplateName
+where
+    T: Into<Cow<'static, str>>,
+{
+    fn from(value: T) -> Self {
+        Self(value.into())
+    }
+}
+
+impl Deref for TemplateName {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

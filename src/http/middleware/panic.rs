@@ -1,6 +1,9 @@
 use std::any::Any;
 
-use crate::{domain::error::InternalError, http::response::Rejection};
+use crate::{
+    domain::error::InternalError,
+    http::{middleware::template::TemplateName, response::Rejection},
+};
 use anyhow::anyhow;
 use axum::response::{IntoResponse, Response};
 
@@ -18,5 +21,5 @@ pub fn catch_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
     .context("catch panic");
     let error = InternalError::from(error);
     tracing::error!(?error);
-    View::error(Rejection(error)).into_response()
+    View::new(TemplateName::error(), Rejection(error)).into_response()
 }

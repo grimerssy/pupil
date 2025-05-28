@@ -13,30 +13,20 @@ use crate::{
     http::response::{HttpResponse, ResponseContext},
 };
 
-use super::template::{Template, TemplateMeta, TemplateName};
+use super::template::{Template, TemplateName};
 
 pub type ErrorView<I, E> = View<AppError<I, E>>;
 
 #[derive(Clone, Debug)]
 pub struct View<T> {
-    template_meta: TemplateMeta,
+    template_name: TemplateName,
     data: T,
 }
 
 impl<T> View<T> {
     pub fn new(template_name: impl Into<TemplateName>, data: T) -> Self {
-        let template_meta = TemplateMeta::new(template_name);
-        Self::with_meta(template_meta, data)
-    }
-
-    pub fn error(error: T) -> Self {
-        let template_meta = TemplateMeta::error();
-        Self::with_meta(template_meta, error)
-    }
-
-    fn with_meta(template_meta: TemplateMeta, data: T) -> Self {
         Self {
-            template_meta,
+            template_name: template_name.into(),
             data,
         }
     }
@@ -59,9 +49,7 @@ pub(super) async fn render_view(req: Request, next: Next) -> Response {
         .unwrap_or(TEXT_HTML);
     let body = match preference {
         mime if mime == APPLICATION_JSON => Json(view.data).into_response(),
-        mime if mime == TEXT_HTML => {
-            Template::with_meta(view.template_meta, view.data).into_response()
-        }
+        mime if mime == TEXT_HTML => Template::new(view.template_name, view.data).into_response(),
         _ => unreachable!(),
     };
     let (parts, _) = response.into_parts();
@@ -80,6 +68,6 @@ where
 {
     fn into_response(self) -> Response {
         self.data
-            .with_body(|response| View::with_meta(self.template_meta, response))
+            .with_body(|response| View::new(self.template_name, response))
     }
 }
