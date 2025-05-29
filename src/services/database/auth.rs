@@ -7,14 +7,14 @@ use crate::domain::{
 use super::{sql_error, Database};
 
 impl SaveNewUser for Database {
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
     async fn save_new_user(&self, new_user: NewUser) -> crate::Result<(), SaveNewUserError> {
         save_new_user_with(self, new_user).await
     }
 }
 
 impl FindUser for Database {
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
     async fn find_user(&self, email: &MaybeEmail) -> crate::Result<DatabaseUser, FindUserError> {
         find_user_with(self, email).await
     }

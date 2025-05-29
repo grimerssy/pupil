@@ -67,14 +67,14 @@ impl Hasher {
 }
 
 impl HashPassword for Hasher {
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
     fn hash_password(&self, password: &Password) -> crate::Result<PasswordHash> {
         hash_password_with(self, password)
     }
 }
 
 impl VerifyPassword for Hasher {
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
     fn verify_password(
         &self,
         password: MaybePassword,

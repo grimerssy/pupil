@@ -5,8 +5,10 @@ use educe::Educe;
 
 pub type Result<T, E = Infallible, I = ()> = core::result::Result<T, Error<E, I>>;
 
-#[derive(Debug)]
+#[derive(Educe)]
+#[educe(Debug(named_field = false))]
 pub struct Error<E = Infallible, I = ()> {
+    #[educe(Debug(ignore))]
     pub input: I,
     pub kind: ErrorKind<E>,
 }

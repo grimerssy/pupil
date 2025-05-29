@@ -10,7 +10,7 @@ use crate::{
 
 use super::{validation::ValidationErrors, AppContext};
 
-#[tracing::instrument(skip(ctx))]
+#[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
 pub async fn signup<T>(ctx: &AppContext, form: T) -> crate::Result<(), AppError<SignupError>>
 where
     T: core::fmt::Debug + TryInto<SignupData, Error = ValidationErrors>,
@@ -19,10 +19,12 @@ where
         .try_into()
         .map_err(AppError::Validation)
         .map_err(crate::Error::expected)?;
-    ctx.signup(signup_data).await.map_err(crate::Error::cast)
+    ctx.signup(signup_data)
+        .await
+        .map_err(crate::Error::cast)
 }
 
-#[tracing::instrument(skip(ctx))]
+#[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
 pub async fn login<T>(ctx: &AppContext, form: T) -> crate::Result<AuthToken, AppError<LoginError>>
 where
     T: core::fmt::Debug + TryInto<LoginData, Error = ValidationErrors>,
