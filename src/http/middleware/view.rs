@@ -7,14 +7,14 @@ use axum::{
     Extension, Json,
 };
 use mime::{APPLICATION_JSON, TEXT_HTML};
+use serde::Serialize;
 
-use crate::{
-    app::error::AppError, http::response::{HttpResponse, ResponseContext}
+use crate::http::error::HttpError;
+
+use super::{
+    response::{ErrorType, HttpResponse},
+    template::{Template, TemplateName},
 };
-
-use super::template::{Template, TemplateName};
-
-pub type ErrorView<E> = View<crate::Error<AppError<E>>>;
 
 #[derive(Clone, Debug)]
 pub struct View<T> {
@@ -47,8 +47,11 @@ pub(super) async fn render_view(req: Request, next: Next) -> Response {
         .and_then(|accept| accept.negotiate(&[APPLICATION_JSON, TEXT_HTML]).ok())
         .unwrap_or(TEXT_HTML);
     let body = match preference {
-        mime if mime == APPLICATION_JSON => Json(view.data).into_response(),
-        mime if mime == TEXT_HTML => Template::new(view.template_name, view.data).into_response(),
+        mime if mime == APPLICATION_JSON => Json(view.data.message).into_response(),
+        mime if mime == TEXT_HTML => {
+            let template = Template::new(view.template_name, view.data);
+            Extension(template).into_response()
+        }
         _ => unreachable!(),
     };
     let (parts, _) = response.into_parts();
@@ -63,10 +66,23 @@ impl IntoResponse for View<HttpResponse> {
 
 impl<T> IntoResponse for View<T>
 where
-    T: ResponseContext,
+    T: Serialize + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        self.data
-            .with_body(|response| View::new(self.template_name, response))
+        let response = HttpResponse::success(self.data);
+        View::new(self.template_name, response).into_response()
+    }
+}
+
+impl<E, I> IntoResponse for View<crate::Error<E, I>>
+where
+    E: HttpError + Into<ErrorType>,
+    I: Serialize + Send + Sync + 'static,
+{
+    fn into_response(self) -> Response {
+        let status = self.data.kind.status_code();
+        let response = HttpResponse::error(self.data);
+        let view = View::new(self.template_name, response);
+        (status, view).into_response()
     }
 }

@@ -12,7 +12,7 @@ use crate::{
     app::{
         auth::{login, signup},
         validation::{try_convert, ValidationErrors},
-        AppContext,
+        AppContext, AppError,
     },
     domain::{
         login::{LoginData, LoginError},
@@ -23,11 +23,7 @@ use crate::{
 
 use super::{
     error::HttpError,
-    middleware::{
-        template::Template,
-        view::{ErrorView, View},
-    },
-    response::Success,
+    middleware::{template::Template, view::View},
     serialize_secret,
 };
 
@@ -47,12 +43,12 @@ pub fn auth_routes() -> Router<AppContext> {
     Router::new().nest("/signup", signup).nest("/login", login)
 }
 
-pub async fn singup_page() -> Template<Success<()>> {
-    Template::new(SIGNUP_PAGE, Success(()))
+pub async fn singup_page() -> Template<()> {
+    Template::new(SIGNUP_PAGE, ())
 }
 
-pub async fn login_page() -> Template<Success<()>> {
-    Template::new(LOGIN_PAGE, Success(()))
+pub async fn login_page() -> Template<()> {
+    Template::new(LOGIN_PAGE, ())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,11 +62,12 @@ pub struct SignupForm {
 pub async fn handle_signup(
     State(ctx): State<AppContext>,
     Form(form): Form<SignupForm>,
-) -> Result<Redirect, ErrorView<SignupError>> {
+) -> Result<Redirect, View<crate::Error<AppError<SignupError>, SignupForm>>> {
+    let form_copy = form.clone();
     signup(&ctx, form)
         .await
         .map(|_| Redirect::to("/"))
-        .map_err(|error| View::new(SIGNUP_PAGE, error))
+        .map_err(|error| View::new(SIGNUP_PAGE, error.with_input(form_copy)))
 }
 
 impl HttpError for SignupError {
@@ -97,11 +94,12 @@ pub struct LoginResponse {
 pub async fn handle_login(
     State(ctx): State<AppContext>,
     Form(form): Form<LoginForm>,
-) -> Result<View<Success<LoginResponse>>, ErrorView<LoginError>> {
+) -> Result<View<LoginResponse>, View<crate::Error<AppError<LoginError>, LoginForm>>> {
+    let form_copy = form.clone();
     login(&ctx, form)
         .await
-        .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, Success(LoginResponse { access_token })))
-        .map_err(|error| View::new(LOGIN_PAGE, error))
+        .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, LoginResponse { access_token }))
+        .map_err(|error| View::new(LOGIN_PAGE, error.with_input(form_copy)))
 }
 
 impl HttpError for LoginError {

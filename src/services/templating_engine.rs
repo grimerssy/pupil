@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use tera::Tera;
 use unic_langid::LanguageIdentifier;
 
-use crate::{app::error::ErrorContext, http::TemplateRenderer};
+use crate::{app::localization::LocalizedError, http::TemplateRenderer};
 
 static LOCALIZE_FUNCTION: &str = "localize";
 
@@ -99,7 +99,7 @@ fn localize_error(localize: impl tera::Function) -> impl tera::Function {
         let error = args
             .remove(ERROR)
             .ok_or_else(|| tera::Error::msg(format!("missing `{ERROR}` argument")))
-            .and_then(|json| ErrorContext::deserialize(json).map_err(tera::Error::msg))?;
+            .and_then(|json| LocalizedError::deserialize(json).map_err(tera::Error::msg))?;
         let error_key = core::iter::once("error")
             .chain(error.error_code().split('_'))
             .map(|word| word.to_lowercase())

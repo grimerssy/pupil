@@ -1,7 +1,6 @@
 pub use middleware::template::{LocaleNegotiator, TemplateRenderer};
 
 use auth::auth_routes;
-use response::Success;
 use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
 use static_files::static_router;
 
@@ -18,7 +17,6 @@ use crate::app::AppContext;
 
 mod error;
 mod middleware;
-mod response;
 
 mod auth;
 mod static_files;
@@ -48,8 +46,8 @@ fn root_router(ctx: AppContext) -> Router {
         .merge(static_router())
 }
 
-async fn index() -> Template<Success<()>> {
-    Template::new("index.html", Success(()))
+async fn index() -> Template<()> {
+    Template::new("index.html", ())
 }
 
 fn serialize_secret<T, S>(secret: &SecretBox<T>, serializer: S) -> Result<S::Ok, S::Error>

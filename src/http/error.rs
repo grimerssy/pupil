@@ -2,7 +2,7 @@ use std::convert::Infallible;
 
 use axum::http::StatusCode;
 
-use crate::{app::error::AppError, error::ErrorKind};
+use crate::{app::AppError, error::ErrorKind};
 
 pub trait HttpError {
     fn status_code(&self) -> StatusCode;
@@ -14,12 +14,12 @@ impl HttpError for Infallible {
     }
 }
 
-impl<E> HttpError for crate::Error<E>
+impl<E> HttpError for ErrorKind<E>
 where
     E: HttpError,
 {
     fn status_code(&self) -> StatusCode {
-        match &self.kind {
+        match &self {
             ErrorKind::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ErrorKind::Expected(error) => error.status_code(),
         }

@@ -1,6 +1,8 @@
 pub mod template;
 pub mod view;
 
+mod response;
+
 mod not_found;
 mod panic;
 

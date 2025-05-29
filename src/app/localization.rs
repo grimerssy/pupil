@@ -4,38 +4,20 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::ErrorKind;
 
-use super::validation::ValidationErrors;
-
-pub trait ContextualError {
-    fn error_context(self) -> ErrorContext;
-}
-
-#[derive(Debug)]
-pub enum AppError<E> {
-    Validation(ValidationErrors),
-    Logical(E),
-}
-
-impl<E> From<E> for AppError<E> {
-    fn from(value: E) -> Self {
-        Self::Logical(value)
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ErrorContext {
+pub struct LocalizedError {
     error_code: Cow<'static, str>,
-    args: Option<HashMap<Cow<'static, str>, ErrorArgument>>,
+    args: Option<HashMap<Cow<'static, str>, Argument>>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum ErrorArgument {
+pub enum Argument {
     Number(f64),
 }
 
-impl ErrorContext {
+impl LocalizedError {
     pub const fn new(error_code: &'static str) -> Self {
         let error_code = Cow::Borrowed(error_code);
         Self {
@@ -48,7 +30,7 @@ impl ErrorContext {
         &self.error_code
     }
 
-    pub fn args(&self) -> impl Iterator<Item = (&str, &ErrorArgument)> {
+    pub fn args(&self) -> impl Iterator<Item = (&str, &Argument)> {
         self.args
             .iter()
             .flat_map(|args| args.iter())
@@ -56,10 +38,10 @@ impl ErrorContext {
     }
 
     pub fn with_number(self, key: &'static str, value: impl Into<f64>) -> Self {
-        self.with_arg(key, ErrorArgument::Number(value.into()))
+        self.with_arg(key, Argument::Number(value.into()))
     }
 
-    fn with_arg(self, key: &'static str, arg: ErrorArgument) -> Self {
+    fn with_arg(self, key: &'static str, arg: Argument) -> Self {
         let mut args = self.args.unwrap_or_default();
         args.insert(Cow::Borrowed(key), arg);
         Self {
@@ -69,20 +51,20 @@ impl ErrorContext {
     }
 }
 
-impl ContextualError for Infallible {
-    fn error_context(self) -> ErrorContext {
-        match self {}
+impl From<Infallible> for LocalizedError {
+    fn from(value: Infallible) -> Self {
+        match value {}
     }
 }
 
-impl<E> ContextualError for crate::Error<E>
+impl<E> From<ErrorKind<E>> for LocalizedError
 where
-    E: ContextualError,
+    E: Into<Self>,
 {
-    fn error_context(self) -> ErrorContext {
-        match self.kind {
-            ErrorKind::Internal(_) => ErrorContext::new("INTERNAL"),
-            ErrorKind::Expected(error) => error.error_context(),
+    fn from(value: ErrorKind<E>) -> Self {
+        match value {
+            ErrorKind::Internal(error) => <ErrorKind>::Internal(error).into(),
+            ErrorKind::Expected(error) => error.into(),
         }
     }
 }

@@ -6,7 +6,7 @@ use sqlx::{
 };
 
 use crate::app::{
-    error::ErrorContext,
+    localization::LocalizedError,
     validation::{Validation, ValidationFailure},
 };
 
@@ -32,27 +32,27 @@ impl TryFrom<SecretString> for Password {
         Validation::new(value)
             .check_or_else(
                 |v| v.expose_secret().len() >= MIN_LENGTH,
-                || ErrorContext::new("PASSWORD_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
+                || LocalizedError::new("PASSWORD_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.expose_secret().len() <= MAX_LENGTH,
-                || ErrorContext::new("PASSWORD_TOO_LONG").with_number("max", MAX_LENGTH as f64),
+                || LocalizedError::new("PASSWORD_TOO_LONG").with_number("max", MAX_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(char::is_lowercase),
-                || ErrorContext::new("PASSWORD_NO_LOWERCASE"),
+                || LocalizedError::new("PASSWORD_NO_LOWERCASE"),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(char::is_uppercase),
-                || ErrorContext::new("PASSWORD_NO_UPPERCASE"),
+                || LocalizedError::new("PASSWORD_NO_UPPERCASE"),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(|c| c.is_ascii_digit()),
-                || ErrorContext::new("PASSWORD_NO_DIGITS"),
+                || LocalizedError::new("PASSWORD_NO_DIGITS"),
             )
             .check_or_else(
                 |v| v.expose_secret().chars().any(|c| c.is_ascii_punctuation()),
-                || ErrorContext::new("PASSWORD_NO_SPECIAL"),
+                || LocalizedError::new("PASSWORD_NO_SPECIAL"),
             )
             .finish()
             .map(Self)

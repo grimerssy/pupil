@@ -13,7 +13,7 @@ pub struct Error<E = Infallible, I = ()> {
 
 #[derive(Educe)]
 #[educe(Debug)]
-pub enum ErrorKind<E> {
+pub enum ErrorKind<E = Infallible> {
     Expected(E),
     Internal(#[educe(Debug(method(fmt_error_chain)))] anyhow::Error),
 }
@@ -50,10 +50,8 @@ impl<E, I> Error<E, I> {
 
     pub fn from_internal(error: Error<Infallible, I>) -> Self {
         let input = error.input;
-        let kind = match error.kind {
-            ErrorKind::Expected(never) => match never {},
-            ErrorKind::Internal(error) => ErrorKind::Internal(error),
-        };
+        let ErrorKind::Internal(internal_error) = error.kind;
+        let kind = ErrorKind::Internal(internal_error);
         Self { input, kind }
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
-    app::error::{ContextualError, ErrorContext},
-    http::{error::HttpError, middleware::template::TemplateName, response::Rejection},
+    app::localization::LocalizedError,
+    http::{error::HttpError, middleware::template::TemplateName},
 };
 use axum::http::StatusCode;
 
@@ -15,15 +15,15 @@ impl HttpError for RouteNotFound {
     }
 }
 
-impl ContextualError for RouteNotFound {
-    fn error_context(self) -> ErrorContext {
-        ErrorContext::new("NOT_FOUND")
+impl From<RouteNotFound> for LocalizedError {
+    fn from(_: RouteNotFound) -> Self {
+        Self::new("NOT_FOUND")
     }
 }
 
 #[tracing::instrument]
-pub async fn not_found_view() -> View<Rejection<RouteNotFound>> {
-    let error = RouteNotFound;
+pub async fn not_found_view() -> View<crate::Error<RouteNotFound>> {
+    let error = crate::Error::expected(RouteNotFound);
     tracing::info!(?error);
-    View::new(TemplateName::error(), Rejection(error))
+    View::new(TemplateName::error(), error)
 }

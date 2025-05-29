@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use serde::Deserialize;
+use validation::ValidationErrors;
 
 use crate::services::{
     database::{Database, DatabaseConfig},
@@ -12,7 +13,7 @@ use crate::services::{
 };
 
 pub mod auth;
-pub mod error;
+pub mod localization;
 pub mod validation;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -35,6 +36,12 @@ pub struct AppContext {
     pub templating_engine: Arc<TemplatingEngine<Arc<Localizer>>>,
 }
 
+#[derive(Debug)]
+pub enum AppError<E> {
+    Validation(ValidationErrors),
+    Logical(E),
+}
+
 impl AppContext {
     pub fn new(config: AppConfig) -> anyhow::Result<Self> {
         let hasher = Hasher::new(config.hasher)?;
@@ -52,5 +59,11 @@ impl AppContext {
             token_issuer,
             templating_engine,
         })
+    }
+}
+
+impl<E> From<E> for AppError<E> {
+    fn from(value: E) -> Self {
+        Self::Logical(value)
     }
 }

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
-use super::error::ErrorContext;
+use super::localization::LocalizedError;
 
 #[derive(Debug)]
 pub struct Validation<I> {
@@ -17,13 +17,13 @@ pub struct Validation<I> {
 #[derive(Debug)]
 pub struct ValidationFailure<I> {
     pub input: I,
-    pub errors: Vec<ErrorContext>,
+    pub errors: Vec<LocalizedError>,
 }
 
-#[derive(Educe, Default, Serialize)]
+#[derive(Educe, Clone, Default, Serialize)]
 #[educe(Debug)]
 pub struct ValidationErrors(
-    #[educe(Debug(method(fmt_keys)))] HashMap<&'static str, Vec<ErrorContext>>,
+    #[educe(Debug(method(fmt_keys)))] HashMap<&'static str, Vec<LocalizedError>>,
 );
 
 impl<I> Validation<I> {
@@ -38,7 +38,7 @@ impl<I> Validation<I> {
     pub fn check_or_else(
         mut self,
         predicate: impl Fn(&I) -> bool,
-        error: impl FnOnce() -> ErrorContext,
+        error: impl FnOnce() -> LocalizedError,
     ) -> Self {
         if !predicate(&self.state.input) {
             self.state.errors.push(error());
@@ -56,7 +56,7 @@ impl<I> Validation<I> {
 }
 
 impl ValidationErrors {
-    pub fn add(&mut self, field: &'static str, mut errors: Vec<ErrorContext>) {
+    pub fn add(&mut self, field: &'static str, mut errors: Vec<LocalizedError>) {
         self.0
             .entry(field)
             .and_modify(|e| e.append(&mut errors))

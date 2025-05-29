@@ -1,7 +1,7 @@
 use educe::Educe;
 
 use crate::app::{
-    error::ErrorContext,
+    localization::LocalizedError,
     validation::{Validation, ValidationFailure},
 };
 
@@ -22,15 +22,15 @@ impl TryFrom<String> for Name {
         Validation::new(value)
             .check_or_else(
                 |v| v.len() >= MIN_LENGTH,
-                || ErrorContext::new("NAME_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
+                || LocalizedError::new("NAME_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.len() <= MAX_LENGTH,
-                || ErrorContext::new("NAME_TOO_LONG").with_number("max", MAX_LENGTH as f64),
+                || LocalizedError::new("NAME_TOO_LONG").with_number("max", MAX_LENGTH as f64),
             )
             .check_or_else(
                 |v| v.chars().all(is_char_valid),
-                || ErrorContext::new("NAME_INVALID_CHARS"),
+                || LocalizedError::new("NAME_INVALID_CHARS"),
             )
             .finish()
             .map(Self)

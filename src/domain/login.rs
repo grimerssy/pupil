@@ -1,4 +1,4 @@
-use crate::app::error::{ContextualError, ErrorContext};
+use crate::app::localization::LocalizedError;
 
 use crate::domain::{
     email::MaybeEmail,
@@ -70,10 +70,10 @@ impl From<VerifyPasswordError> for LoginError {
     }
 }
 
-impl ContextualError for LoginError {
-    fn error_context(self) -> ErrorContext {
-        match self {
-            Self::InvalidCredentials => ErrorContext::new("INVALID_CREDENTIALS"),
+impl From<LoginError> for LocalizedError {
+    fn from(value: LoginError) -> Self {
+        match value {
+            LoginError::InvalidCredentials => Self::new("INVALID_CREDENTIALS"),
         }
     }
 }

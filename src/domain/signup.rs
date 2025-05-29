@@ -1,4 +1,4 @@
-use crate::app::error::{ContextualError, ErrorContext};
+use crate::app::localization::LocalizedError;
 
 use crate::domain::{
     email::Email,
@@ -42,10 +42,10 @@ pub enum SaveNewUserError {
     EmailConflict,
 }
 
-impl ContextualError for SignupError {
-    fn error_context(self) -> ErrorContext {
-        match self {
-            Self::EmailTaken => ErrorContext::new("EMAIL_TAKEN"),
+impl From<SignupError> for LocalizedError {
+    fn from(value: SignupError) -> Self {
+        match value {
+            SignupError::EmailTaken => Self::new("EMAIL_TAKEN"),
         }
     }
 }

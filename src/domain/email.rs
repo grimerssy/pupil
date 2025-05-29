@@ -4,7 +4,7 @@ use educe::Educe;
 use email_address::EmailAddress;
 
 use crate::app::{
-    error::ErrorContext,
+    localization::LocalizedError,
     validation::{Validation, ValidationFailure},
 };
 
@@ -27,11 +27,11 @@ impl TryFrom<String> for Email {
         Validation::new(value)
             .check_or_else(
                 |v| EmailAddress::from_str(v).is_ok(),
-                || ErrorContext::new("INVALID_EMAIL"),
+                || LocalizedError::new("INVALID_EMAIL"),
             )
             .check_or_else(
                 |v| v.len() <= MAX_LENGTH,
-                || ErrorContext::new("EMAIL_TOO_LONG").with_number("max", MAX_LENGTH as f64),
+                || LocalizedError::new("EMAIL_TOO_LONG").with_number("max", MAX_LENGTH as f64),
             )
             .finish()
             .map(Self)

@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::http::{middleware::template::TemplateName, response::Rejection};
+use crate::http::middleware::template::TemplateName;
 use anyhow::anyhow;
 use axum::response::{IntoResponse, Response};
 
@@ -16,7 +16,7 @@ pub fn catch_panic(panic_message: Box<dyn Any + Send + 'static>) -> Response {
         anyhow!("unknown panic message")
     }
     .context("catch panic");
-    let error = <crate::Error>::internal(error);
-    tracing::error!(?error);
-    View::new(TemplateName::error(), Rejection(error)).into_response()
+    let panic = <crate::Error>::internal(error);
+    tracing::error!(?panic);
+    View::new(TemplateName::error(), panic).into_response()
 }

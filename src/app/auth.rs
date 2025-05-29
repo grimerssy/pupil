@@ -1,5 +1,5 @@
 use crate::{
-    app::error::AppError,
+    app::AppError,
     domain::{
         id::{Cipher, UserId},
         login::{FindUser, IssueToken, Login, LoginData, LoginError, VerifyPassword},

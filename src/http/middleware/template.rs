@@ -10,10 +10,9 @@ use axum::{
 use serde::Serialize;
 use unic_langid::LanguageIdentifier;
 
-use crate::{
-    app::AppContext,
-    http::response::{HttpResponse, Rejection, ResponseContext},
-};
+use crate::{app::AppContext, http::error::HttpError};
+
+use super::response::{ErrorType, HttpResponse};
 
 pub trait TemplateRenderer {
     fn render_template<T>(
@@ -72,19 +71,21 @@ pub(super) async fn render_template(
         .filter_map(|lang| lang.parse::<LanguageIdentifier>().ok())
         .collect::<Vec<_>>();
     let locale = ctx.localizer.negotiate_locale(language_preferences);
-    let html = match renderer.render_template(&template.template_name, template.data, &locale) {
-        Ok(html) => html,
-        Err(error) => {
-            response = Template::new(TemplateName::error(), Rejection(error)).into_response();
-            let template = response
-                .extensions_mut()
-                .remove::<Template<HttpResponse>>()
-                .unwrap();
-            renderer
-                .render_template(&template.template_name, template.data, &locale)
-                .expect("render error template")
-        }
-    };
+    let html =
+        match renderer.render_template(&template.template_name, template.data.message, &locale) {
+            Ok(html) => html,
+            Err(error) => {
+                let error: crate::Error<std::convert::Infallible, ()> = error;
+                response = Template::new(TemplateName::error(), error).into_response();
+                let template = response
+                    .extensions_mut()
+                    .remove::<Template<HttpResponse>>()
+                    .unwrap();
+                renderer
+                    .render_template(&template.template_name, template.data.message, &locale)
+                    .expect("render error template")
+            }
+        };
     let (parts, _) = response.into_parts();
     (parts, Html(html)).into_response()
 }
@@ -97,11 +98,24 @@ impl IntoResponse for Template<HttpResponse> {
 
 impl<T> IntoResponse for Template<T>
 where
-    T: ResponseContext,
+    T: Serialize + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        self.data
-            .with_body(|response| Template::new(self.template_name, response))
+        let response = HttpResponse::success(self.data);
+        Template::new(self.template_name, response).into_response()
+    }
+}
+
+impl<E, I> IntoResponse for Template<crate::Error<E, I>>
+where
+    E: HttpError + Into<ErrorType>,
+    I: Serialize + Send + Sync + 'static,
+{
+    fn into_response(self) -> Response {
+        let status = self.data.kind.status_code();
+        let response = HttpResponse::error(self.data);
+        let template = Template::new(self.template_name, response);
+        (status, template).into_response()
     }
 }
 
