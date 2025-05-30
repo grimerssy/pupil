@@ -18,6 +18,7 @@ use crate::{
         auth::{LoginData, LoginError, SignupData, SignupError},
         token::AuthToken,
     },
+    Error,
 };
 
 use super::{
@@ -42,6 +43,10 @@ pub fn auth_routes() -> Router<AppContext> {
     Router::new().nest("/signup", signup).nest("/login", login)
 }
 
+type HttpSignupError = Error<AppError<SignupError>, SignupForm>;
+
+type HttpLoginError = Error<AppError<LoginError>, LoginForm>;
+
 pub async fn singup_page() -> Template<()> {
     Template::new(SIGNUP_PAGE, ())
 }
@@ -50,18 +55,10 @@ pub async fn login_page() -> Template<()> {
     Template::new(LOGIN_PAGE, ())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SignupForm {
-    email: String,
-    #[serde(serialize_with = "serialize_secret")]
-    password: SecretString,
-    name: String,
-}
-
 pub async fn handle_signup(
     State(ctx): State<AppContext>,
     Form(form): Form<SignupForm>,
-) -> Result<Redirect, View<crate::Error<AppError<SignupError>, SignupForm>>> {
+) -> Result<Redirect, View<HttpSignupError>> {
     let form_copy = form.clone();
     signup(&ctx, form)
         .await
@@ -69,12 +66,23 @@ pub async fn handle_signup(
         .map_err(|error| View::new(SIGNUP_PAGE, error.with_input(form_copy)))
 }
 
-impl HttpError for SignupError {
-    fn status_code(&self) -> StatusCode {
-        match self {
-            Self::EmailTaken => StatusCode::CONFLICT,
-        }
-    }
+pub async fn handle_login(
+    State(ctx): State<AppContext>,
+    Form(form): Form<LoginForm>,
+) -> Result<View<LoginResponse>, ErrorView<AppError<LoginError>>> {
+    let form_copy = form.clone();
+    login(&ctx, form)
+        .await
+        .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, LoginResponse { access_token }))
+        .map_err(|error| View::new(LOGIN_PAGE, error.with_input(form_copy)))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SignupForm {
+    email: String,
+    #[serde(serialize_with = "serialize_secret")]
+    password: SecretString,
+    name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,15 +98,12 @@ pub struct LoginResponse {
     access_token: AuthToken,
 }
 
-pub async fn handle_login(
-    State(ctx): State<AppContext>,
-    Form(form): Form<LoginForm>,
-) -> Result<View<LoginResponse>, View<crate::Error<AppError<LoginError>, LoginForm>>> {
-    let form_copy = form.clone();
-    login(&ctx, form)
-        .await
-        .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, LoginResponse { access_token }))
-        .map_err(|error| View::new(LOGIN_PAGE, error.with_input(form_copy)))
+impl HttpError for SignupError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            Self::EmailTaken => StatusCode::CONFLICT,
+        }
+    }
 }
 
 impl HttpError for LoginError {
