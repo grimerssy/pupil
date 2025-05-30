@@ -6,7 +6,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds};
 
-use crate::domain::{id::UserId, login::IssueToken, token::AuthToken};
+use crate::domain::{auth::IssueToken, id::UserId, token::AuthToken};
 
 #[serde_as]
 #[derive(Clone, Debug, Deserialize)]

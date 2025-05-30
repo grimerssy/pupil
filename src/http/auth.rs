@@ -15,8 +15,7 @@ use crate::{
         AppContext, AppError,
     },
     domain::{
-        login::{LoginData, LoginError},
-        signup::{SignupData, SignupError},
+        auth::{LoginData, LoginError, SignupData, SignupError},
         token::AuthToken,
     },
 };

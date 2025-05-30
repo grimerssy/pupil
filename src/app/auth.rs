@@ -1,9 +1,11 @@
 use crate::{
     app::AppError,
     domain::{
+        auth::{
+            FindUser, HashPassword, IssueToken, Login, LoginData, LoginError, NewUser, SaveNewUser,
+            Signup, SignupData, SignupError, VerifyPassword,
+        },
         id::{Cipher, UserId},
-        login::{FindUser, IssueToken, Login, LoginData, LoginError, VerifyPassword},
-        signup::{HashPassword, NewUser, SaveNewUser, Signup, SignupData, SignupError},
         token::AuthToken,
     },
 };
@@ -19,9 +21,7 @@ where
         .try_into()
         .map_err(AppError::Validation)
         .map_err(crate::Error::expected)?;
-    ctx.signup(signup_data)
-        .await
-        .map_err(crate::Error::cast)
+    ctx.signup(signup_data).await.map_err(crate::Error::cast)
 }
 
 #[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
@@ -93,7 +93,7 @@ async fn login_with(
     verifier
         .verify_password(login_data.password, user.password_hash)
         .map_err(crate::Error::cast)?;
-    let user_id = UserId::new(user.db_user_id, cipher.cipher());
+    let user_id = UserId::new(user.id, cipher.cipher());
     issuer
         .issue_token(user_id)
         .map_err(crate::Error::from_internal)

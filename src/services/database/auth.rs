@@ -1,7 +1,6 @@
 use crate::domain::{
+    auth::{DatabaseUser, FindUser, FindUserError, NewUser, SaveNewUser, SaveNewUserError},
     email::MaybeEmail,
-    login::{DatabaseUser, FindUser, FindUserError},
-    signup::{NewUser, SaveNewUser, SaveNewUserError},
 };
 
 use super::{sql_error, Database};
@@ -51,7 +50,7 @@ async fn find_user_with(
 ) -> crate::Result<DatabaseUser, FindUserError> {
     sqlx::query_as(
         "
-        select id as db_user_id, password_hash
+        select id, email, name, password_hash
         from users
         where email = $1
         ",

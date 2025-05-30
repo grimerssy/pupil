@@ -1,5 +1,4 @@
-pub mod login;
-pub mod signup;
+pub mod auth;
 
 pub mod email;
 pub mod id;

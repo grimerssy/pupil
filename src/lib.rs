@@ -11,3 +11,6 @@ mod services;
 mod telemetry;
 
 use error::{Error, Result};
+
+// TODO
+// try_into in app entrypoints -> Into shared dto, try_from with it
