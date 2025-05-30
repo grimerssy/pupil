@@ -3,12 +3,13 @@ pub use middleware::template::{LocaleNegotiator, TemplateRenderer};
 use auth::auth_routes;
 use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
 use static_files::static_router;
+use tower_http::{catch_panic::CatchPanicLayer, trace::TraceLayer};
 
 use std::net::SocketAddr;
 
 use anyhow::Context;
 use axum::{routing::get, Router};
-use middleware::{template::Template, RouterExt};
+use middleware::{not_found::not_found_view, panic::catch_panic, template::Template, RouterExt};
 use serde::{Deserialize, Serialize, Serializer};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use tokio::net::TcpListener;
@@ -31,22 +32,25 @@ pub struct HttpConfig {
 pub async fn serve_http(config: HttpConfig, ctx: AppContext) -> anyhow::Result<()> {
     let addr = SocketAddr::from((config.host, config.port));
     let listener = TcpListener::bind(addr).await?;
-    let router = root_router(ctx);
+    let router = root_router()
+        .fallback(not_found_view)
+        .layer(CatchPanicLayer::custom(catch_panic))
+        .with_renderers(ctx.clone())
+        .layer(TraceLayer::new_for_http())
+        .with_state(ctx)
+        .merge(static_router());
     axum::serve(listener, router.into_make_service())
         .await
         .context("start http server")
 }
 
-fn root_router(ctx: AppContext) -> Router {
+fn root_router() -> Router<AppContext> {
     Router::new()
-        .route("/", get(index))
+        .route("/", get(homepage))
         .nest("/auth", auth_routes())
-        .with_middleware(ctx.clone())
-        .with_state(ctx)
-        .merge(static_router())
 }
 
-async fn index() -> Template<()> {
+async fn homepage() -> Template<()> {
     Template::new("index.html", ())
 }
 
