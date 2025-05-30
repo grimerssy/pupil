@@ -12,17 +12,9 @@ pub struct HttpResponse {
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "status", rename_all = "lowercase")]
 pub enum HttpMessage<T> {
-    Success {
-        data: T,
-    },
-    Fail {
-        input: T,
-        data: ValidationErrors,
-    },
-    Error {
-        input: T,
-        data: LocalizedError,
-    },
+    Success { data: T },
+    Fail { input: T, data: ValidationErrors },
+    Error { input: T, data: LocalizedError },
 }
 
 pub enum ErrorType {

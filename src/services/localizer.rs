@@ -117,8 +117,7 @@ impl TemplateLocalizer for Arc<Localizer> {
             fallback,
             bundles: _,
         } = self.as_ref();
-        let bundles = Localizer::read_bundles(path)
-            .context("reload localizer")?;
+        let bundles = Localizer::read_bundles(path).context("reload localizer")?;
         let localizer = Localizer {
             path: path.clone(),
             fallback: fallback.clone(),

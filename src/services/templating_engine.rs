@@ -81,8 +81,7 @@ where
 {
     #[cfg(debug_assertions)]
     let templating_engine = reload_engine(templating_engine)?;
-    let context = serde_json::to_value(data)
-        .context("serialize template context")?;
+    let context = serde_json::to_value(data).context("serialize template context")?;
     let mut tera_context = tera::Context::new();
     tera_context.insert("context", &context);
     tera_context.insert("locale", locale);
