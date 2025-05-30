@@ -69,7 +69,7 @@ pub async fn handle_signup(
 pub async fn handle_login(
     State(ctx): State<AppContext>,
     Form(form): Form<LoginForm>,
-) -> Result<View<LoginResponse>, ErrorView<AppError<LoginError>>> {
+) -> Result<View<LoginResponse>, View<HttpLoginError>> {
     let form_copy = form.clone();
     login(&ctx, form)
         .await
