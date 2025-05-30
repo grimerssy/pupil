@@ -1,25 +1,12 @@
 use crate::domain::{
-    auth::{DatabaseUser, FindUser, FindUserError, NewUser, SaveNewUser, SaveNewUserError},
+    auth::{DatabaseUser, FindUserError, NewUser, SaveNewUserError},
     email::MaybeEmail,
 };
 
 use super::{sql_error, Database};
 
-impl SaveNewUser for Database {
-    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
-    async fn save_new_user(&self, new_user: NewUser) -> crate::Result<(), SaveNewUserError> {
-        save_new_user_with(self, new_user).await
-    }
-}
-
-impl FindUser for Database {
-    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
-    async fn find_user(&self, email: &MaybeEmail) -> crate::Result<DatabaseUser, FindUserError> {
-        find_user_with(self, email).await
-    }
-}
-
-async fn save_new_user_with(
+#[tracing::instrument(skip(db), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn save_new_user(
     db: &Database,
     new_user: NewUser,
 ) -> crate::Result<(), SaveNewUserError> {
@@ -44,7 +31,8 @@ async fn save_new_user_with(
     }
 }
 
-async fn find_user_with(
+#[tracing::instrument(skip(db), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn find_user(
     db: &Database,
     email: &MaybeEmail,
 ) -> crate::Result<DatabaseUser, FindUserError> {

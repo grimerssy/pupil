@@ -15,7 +15,7 @@ pub struct DbUserId(i64);
 pub struct UserId(#[serde_as(as = "DisplayFromStr")] Id<{ tag("user") }>);
 
 impl UserId {
-    pub fn new(db_id: DbUserId, cipher: &Aes128) -> Self {
-        Self(Id::new(db_id.0, cipher))
+    pub fn new(db_id: DbUserId, cipher: &impl Cipher) -> Self {
+        Self(Id::new(db_id.0, cipher.cipher()))
     }
 }

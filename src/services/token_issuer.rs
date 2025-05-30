@@ -6,7 +6,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds};
 
-use crate::domain::{auth::IssueToken, id::UserId, token::AuthToken};
+use crate::domain::{id::UserId, token::AuthToken};
 
 #[serde_as]
 #[derive(Clone, Debug, Deserialize)]
@@ -35,21 +35,20 @@ impl TokenIssuer {
     }
 }
 
-impl IssueToken for TokenIssuer {
-    fn issue_token(&self, user_id: UserId) -> crate::Result<AuthToken> {
-        let now = get_current_timestamp();
-        let claims = TokenClaims {
-            iat: now,
-            exp: now + self.config.ttl.as_secs(),
-            user_id,
-        };
-        let token = jsonwebtoken::encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.config.secret.expose_secret().as_bytes()),
-        )
-        .map(AuthToken::new)
-        .context("encode jwt")?;
-        Ok(token)
-    }
+#[tracing::instrument(skip(issuer), ret(level = "debug") err(Debug, level = "debug"))]
+pub fn issue_token(issuer: &TokenIssuer, user_id: UserId) -> crate::Result<AuthToken> {
+    let now = get_current_timestamp();
+    let claims = TokenClaims {
+        iat: now,
+        exp: now + issuer.config.ttl.as_secs(),
+        user_id,
+    };
+    let token = jsonwebtoken::encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(issuer.config.secret.expose_secret().as_bytes()),
+    )
+    .map(AuthToken::new)
+    .context("encode jwt")?;
+    Ok(token)
 }

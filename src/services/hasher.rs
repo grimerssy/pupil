@@ -7,7 +7,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 
 use crate::domain::{
-    auth::{HashPassword, VerifyPassword, VerifyPasswordError},
+    auth::VerifyPasswordError,
     password::{MaybePassword, Password, PasswordHash},
 };
 
@@ -65,25 +65,8 @@ impl Hasher {
     }
 }
 
-impl HashPassword for Hasher {
-    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
-    fn hash_password(&self, password: &Password) -> crate::Result<PasswordHash> {
-        hash_password_with(self, password)
-    }
-}
-
-impl VerifyPassword for Hasher {
-    #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
-    fn verify_password(
-        &self,
-        password: MaybePassword,
-        password_hash: PasswordHash,
-    ) -> crate::Result<(), VerifyPasswordError> {
-        verify_password_with(self, password, password_hash)
-    }
-}
-
-fn hash_password_with(hasher: &Hasher, password: &Password) -> crate::Result<PasswordHash> {
+#[tracing::instrument(skip(hasher), ret(level = "debug") err(Debug, level = "debug"))]
+pub fn hash_password_with(hasher: &Hasher, password: &Password) -> crate::Result<PasswordHash> {
     let hash = hasher
         .expect_argon()
         .hash_password(
@@ -95,7 +78,8 @@ fn hash_password_with(hasher: &Hasher, password: &Password) -> crate::Result<Pas
     Ok(hash)
 }
 
-fn verify_password_with(
+#[tracing::instrument(skip(hasher), ret(level = "debug") err(Debug, level = "debug"))]
+pub fn verify_password_with(
     hasher: &Hasher,
     password: MaybePassword,
     password_hash: PasswordHash,

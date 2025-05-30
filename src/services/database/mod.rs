@@ -2,7 +2,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
 
-mod auth;
+pub mod auth;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct DatabaseConfig {

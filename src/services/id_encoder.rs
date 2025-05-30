@@ -3,8 +3,6 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use squint::aes::{cipher::KeyInit, Aes128};
 
-use crate::domain::id::Cipher;
-
 #[derive(Clone, Debug, Deserialize)]
 pub struct IdConfig {
     secret: SecretString,
@@ -23,8 +21,8 @@ impl IdEncoder {
     }
 }
 
-impl Cipher for IdEncoder {
-    fn cipher(&self) -> &Aes128 {
+impl AsRef<Aes128> for IdEncoder {
+    fn as_ref(&self) -> &Aes128 {
         &self.cipher
     }
 }
