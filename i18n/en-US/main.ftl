@@ -16,4 +16,4 @@ error-internal = An unexpected error occurred
 
 error-not-found = Requested resourse was not found
 
-error-invalid-password = Invalid login or password
+error-invalid-credentials = Invalid login or password
