@@ -13,14 +13,15 @@ pub async fn save_new_user(
     match sqlx::query(
         "
         insert into users
-          (email, name, password_hash)
+          (email, name, password_hash, role)
         values
-          ($1, $2, $3)
+          ($1, $2, $3, $4)
         ",
     )
     .bind(new_user.email)
     .bind(new_user.name)
     .bind(new_user.password_hash)
+    .bind(new_user.role)
     .execute(&db.pool)
     .await
     {
@@ -38,7 +39,7 @@ pub async fn find_user(
 ) -> crate::Result<DatabaseUser, FindUserError> {
     sqlx::query_as(
         "
-        select id, email, name, password_hash
+        select id, email, name, password_hash, role
         from users
         where email = $1
         ",

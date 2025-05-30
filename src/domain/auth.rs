@@ -8,6 +8,8 @@ use crate::domain::{
     token::AuthToken,
 };
 
+use super::role::Role;
+
 pub trait Signup {
     async fn signup(&self, signup_data: SignupData) -> crate::Result<(), SignupError>;
 }
@@ -58,6 +60,7 @@ pub struct NewUser {
     pub email: Email,
     pub password_hash: PasswordHash,
     pub name: Name,
+    pub role: Role,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -68,7 +71,8 @@ pub struct DatabaseUser {
     #[allow(unused)]
     pub name: Name,
     pub password_hash: PasswordHash,
-    // TODO role
+    #[allow(unused)]
+    pub role: Role,
 }
 
 #[derive(Debug)]

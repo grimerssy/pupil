@@ -11,6 +11,7 @@ use crate::{
         email::MaybeEmail,
         id::{Cipher, UserId},
         password::{MaybePassword, Password, PasswordHash},
+        role::Role,
         token::AuthToken,
     },
     services::{
@@ -47,10 +48,12 @@ async fn signup_with(
     let password_hash = hasher
         .hash_password(&password)
         .map_err(crate::Error::from_internal)?;
+    let role = Role::Student;
     let new_user = NewUser {
         email,
         name,
         password_hash,
+        role,
     };
     storage
         .save_new_user(new_user)
