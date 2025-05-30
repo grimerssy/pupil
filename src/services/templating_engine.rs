@@ -65,11 +65,11 @@ where
     where
         T: Serialize,
     {
-        render_template_with(self, template_name, data, locale)
+        render_template(self, template_name, data, locale)
     }
 }
 
-fn render_template_with<T, L>(
+fn render_template<T, L>(
     templating_engine: &TemplatingEngine<L>,
     template_name: &str,
     data: T,

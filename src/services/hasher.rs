@@ -66,7 +66,7 @@ impl Hasher {
 }
 
 #[tracing::instrument(skip(hasher), ret(level = "debug") err(Debug, level = "debug"))]
-pub fn hash_password_with(hasher: &Hasher, password: &Password) -> crate::Result<PasswordHash> {
+pub fn hash_password(hasher: &Hasher, password: &Password) -> crate::Result<PasswordHash> {
     let hash = hasher
         .expect_argon()
         .hash_password(
@@ -79,7 +79,7 @@ pub fn hash_password_with(hasher: &Hasher, password: &Password) -> crate::Result
 }
 
 #[tracing::instrument(skip(hasher), ret(level = "debug") err(Debug, level = "debug"))]
-pub fn verify_password_with(
+pub fn verify_password(
     hasher: &Hasher,
     password: MaybePassword,
     password_hash: PasswordHash,

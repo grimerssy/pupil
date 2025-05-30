@@ -42,6 +42,10 @@ pub trait IssueToken {
     fn issue_token(&self, user_id: UserId) -> crate::Result<AuthToken>;
 }
 
+pub trait EncodeUserId {
+    fn encode_user_id(&self, raw_id: DbUserId) -> crate::Result<UserId>;
+}
+
 #[derive(Debug, Clone)]
 pub struct SignupData {
     pub email: Email,

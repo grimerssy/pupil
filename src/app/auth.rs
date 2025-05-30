@@ -1,22 +1,21 @@
-use squint::aes::Aes128;
-
 use crate::{
     app::AppError,
     domain::{
         auth::{
-            DatabaseUser, FindUser, FindUserError, HashPassword, IssueToken, Login, LoginData,
-            LoginError, NewUser, SaveNewUser, SaveNewUserError, Signup, SignupData, SignupError,
-            VerifyPassword, VerifyPasswordError,
+            DatabaseUser, EncodeUserId, FindUser, FindUserError, HashPassword, IssueToken, Login,
+            LoginData, LoginError, NewUser, SaveNewUser, SaveNewUserError, Signup, SignupData,
+            SignupError, VerifyPassword, VerifyPasswordError,
         },
         email::MaybeEmail,
-        id::{Cipher, UserId},
+        id::UserId,
         password::{MaybePassword, Password, PasswordHash},
         role::Role,
         token::AuthToken,
     },
     services::{
         database::auth::{find_user, save_new_user},
-        hasher::{hash_password_with, verify_password_with},
+        hasher::{hash_password, verify_password},
+        id_encoder::encode_user_id,
         token_issuer::issue_token,
     },
 };
@@ -76,7 +75,7 @@ where
 async fn login_with(
     storage: &impl FindUser,
     verifier: &impl VerifyPassword,
-    cipher: &impl Cipher,
+    encoder: &impl EncodeUserId,
     issuer: &impl IssueToken,
     login_data: LoginData,
 ) -> crate::Result<AuthToken, LoginError> {
@@ -87,7 +86,9 @@ async fn login_with(
     verifier
         .verify_password(login_data.password, user.password_hash)
         .map_err(crate::Error::cast)?;
-    let user_id = UserId::new(user.id, cipher);
+    let user_id = encoder
+        .encode_user_id(user.id)
+        .map_err(crate::Error::from_internal)?;
     issuer
         .issue_token(user_id)
         .map_err(crate::Error::from_internal)
@@ -119,7 +120,7 @@ impl SaveNewUser for AppContext {
 
 impl HashPassword for AppContext {
     fn hash_password(&self, password: &Password) -> crate::Result<PasswordHash> {
-        hash_password_with(&self.hasher, password)
+        hash_password(&self.hasher, password)
     }
 }
 
@@ -129,7 +130,7 @@ impl VerifyPassword for AppContext {
         password: MaybePassword,
         password_hash: PasswordHash,
     ) -> crate::Result<(), VerifyPasswordError> {
-        verify_password_with(&self.hasher, password, password_hash)
+        verify_password(&self.hasher, password, password_hash)
     }
 }
 
@@ -139,8 +140,8 @@ impl IssueToken for AppContext {
     }
 }
 
-impl Cipher for AppContext {
-    fn cipher(&self) -> &Aes128 {
-        self.id_encoder.as_ref().as_ref()
+impl EncodeUserId for AppContext {
+    fn encode_user_id(&self, raw_id: crate::domain::id::DbUserId) -> crate::Result<UserId> {
+        Ok(encode_user_id(&self.id_encoder, raw_id))
     }
 }

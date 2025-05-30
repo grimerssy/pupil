@@ -1,7 +1,12 @@
 use const_fnv1a_hash::fnv1a_hash_str_128;
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
-use squint::aes::{cipher::KeyInit, Aes128};
+use squint::{
+    aes::{cipher::KeyInit, Aes128},
+    Id,
+};
+
+use crate::domain::id::{DbUserId, UserId};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct IdConfig {
@@ -21,8 +26,7 @@ impl IdEncoder {
     }
 }
 
-impl AsRef<Aes128> for IdEncoder {
-    fn as_ref(&self) -> &Aes128 {
-        &self.cipher
-    }
+pub fn encode_user_id(encoder: &IdEncoder, raw_id: DbUserId) -> UserId {
+    let id = Id::new(raw_id.into(), &encoder.cipher);
+    UserId::new(id)
 }

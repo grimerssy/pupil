@@ -1,12 +1,10 @@
+use educe::Educe;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
-use squint::{aes::Aes128, tag, Id};
+use squint::{tag, Id};
 
-pub trait Cipher {
-    fn cipher(&self) -> &Aes128;
-}
-
-#[derive(Debug, Clone, sqlx::Type)]
+#[derive(Educe, Debug, Clone, sqlx::Type)]
+#[educe(Into(i64))]
 #[sqlx(transparent)]
 pub struct DbUserId(i64);
 
@@ -15,7 +13,7 @@ pub struct DbUserId(i64);
 pub struct UserId(#[serde_as(as = "DisplayFromStr")] Id<{ tag("user") }>);
 
 impl UserId {
-    pub fn new(db_id: DbUserId, cipher: &impl Cipher) -> Self {
-        Self(Id::new(db_id.0, cipher.cipher()))
+    pub fn new(id: Id<{ tag("user") }>) -> Self {
+        Self(id)
     }
 }
