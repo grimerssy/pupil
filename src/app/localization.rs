@@ -63,7 +63,7 @@ where
 {
     fn from(value: ErrorKind<E>) -> Self {
         match value {
-            ErrorKind::Internal(error) => <ErrorKind>::Internal(error).into(),
+            ErrorKind::Internal(_) => LocalizedError::new("INTERNAL"),
             ErrorKind::Expected(error) => error.into(),
         }
     }
