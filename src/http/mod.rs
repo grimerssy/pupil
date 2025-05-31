@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize, Serializer};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use tokio::net::TcpListener;
 
-use crate::app::AppContext;
+use crate::{app::AppContext, domain::auth::User};
 
 mod error;
 mod middleware;
@@ -47,11 +47,16 @@ pub async fn serve_http(config: HttpConfig, ctx: AppContext) -> anyhow::Result<(
 fn root_router() -> Router<AppContext> {
     Router::new()
         .route("/", get(homepage))
+        .route("/test", get(print_user))
         .nest("/auth", auth_routes())
 }
 
 async fn homepage() -> Template<()> {
     Template::new("index.html", ())
+}
+
+async fn print_user(user: User) {
+    tracing::info!(?user);
 }
 
 fn serialize_secret<T, S>(secret: &SecretBox<T>, serializer: S) -> Result<S::Ok, S::Error>

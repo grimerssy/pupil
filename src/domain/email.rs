@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use educe::Educe;
 use email_address::EmailAddress;
+use serde::Serialize;
 
 use crate::app::{
     localization::LocalizedError,
@@ -10,7 +11,7 @@ use crate::app::{
 
 const MAX_LENGTH: usize = 50;
 
-#[derive(Educe, Clone, Debug, sqlx::Type)]
+#[derive(Educe, Clone, Debug, Serialize, sqlx::Type)]
 #[educe(Into(String))]
 #[sqlx(transparent)]
 pub struct Email(String);

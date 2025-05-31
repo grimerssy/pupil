@@ -12,8 +12,14 @@ signup-action = Зареєструватися
 login =  Вхід
 login-action = Увійти
 
+logout-action = Вийти
+
+welcome-user = Вітаю, {$user}!
+
 error-internal = Щось пішло не так
 
 error-not-found = Запитаний ресурс не знайдено
 
 error-invalid-credentials = Невірний логін або пароль
+
+error-unauthorized = Увійдіть в підходящий акаунт для доступу до цього ресурсу

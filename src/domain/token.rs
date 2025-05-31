@@ -1,6 +1,8 @@
+use educe::Educe;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Educe, Debug, Clone, Serialize)]
+#[educe(Into(String))]
 pub struct AuthToken(String);
 
 impl AuthToken {

@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::app::localization::LocalizedError;
 
 use crate::domain::{
@@ -18,6 +20,10 @@ pub trait Login {
     async fn login(&self, login_data: LoginData) -> crate::Result<AuthToken, LoginError>;
 }
 
+pub trait Authenticate {
+    async fn authenticate(&self, token: AuthToken) -> crate::Result<User, AuthError>;
+}
+
 pub trait SaveNewUser {
     async fn save_new_user(&self, user: NewUser) -> crate::Result<(), SaveNewUserError>;
 }
@@ -27,7 +33,11 @@ pub trait HashPassword {
 }
 
 pub trait FindUser {
-    async fn find_user(&self, email: &MaybeEmail) -> crate::Result<DatabaseUser, FindUserError>;
+    async fn find_user(&self, email: &MaybeEmail) -> crate::Result<DbUser, FindUserError>;
+}
+
+pub trait GetUser {
+    async fn get_user(&self, db_id: &DbUserId) -> crate::Result<DbUser, GetUserError>;
 }
 
 pub trait VerifyPassword {
@@ -42,8 +52,16 @@ pub trait IssueToken {
     fn issue_token(&self, user_id: UserId) -> crate::Result<AuthToken>;
 }
 
+pub trait ParseToken {
+    fn parse_token(&self, token: AuthToken) -> crate::Result<UserId, ParseTokenError>;
+}
+
 pub trait EncodeUserId {
     fn encode_user_id(&self, raw_id: DbUserId) -> crate::Result<UserId>;
+}
+
+pub trait DecodeUserId {
+    fn decode_user_id(&self, id: UserId) -> crate::Result<DbUserId, DecodeIdError>;
 }
 
 #[derive(Debug, Clone)]
@@ -67,15 +85,20 @@ pub struct NewUser {
     pub role: Role,
 }
 
-#[derive(Debug, Clone, sqlx::FromRow)]
-pub struct DatabaseUser {
-    pub id: DbUserId,
-    #[allow(unused)]
+#[derive(Debug, Clone, Serialize)]
+pub struct User {
+    pub id: UserId,
     pub email: Email,
-    #[allow(unused)]
+    pub name: Name,
+    pub role: Role,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct DbUser {
+    pub id: DbUserId,
+    pub email: Email,
     pub name: Name,
     pub password_hash: PasswordHash,
-    #[allow(unused)]
     pub role: Role,
 }
 
@@ -87,6 +110,11 @@ pub enum SignupError {
 #[derive(Debug)]
 pub enum LoginError {
     InvalidCredentials,
+}
+
+#[derive(Debug)]
+pub enum AuthError {
+    Unauthenticated,
 }
 
 #[derive(Debug)]
@@ -102,6 +130,21 @@ pub enum FindUserError {
 #[derive(Debug)]
 pub enum VerifyPasswordError {
     InvalidPassword,
+}
+
+#[derive(Debug)]
+pub enum GetUserError {
+    NotFound,
+}
+
+#[derive(Debug)]
+pub enum ParseTokenError {
+    Invalid,
+}
+
+#[derive(Debug)]
+pub enum DecodeIdError {
+    InvalidFormat,
 }
 
 impl From<SignupError> for LocalizedError {
@@ -140,6 +183,30 @@ impl From<VerifyPasswordError> for LoginError {
     fn from(value: VerifyPasswordError) -> Self {
         match value {
             VerifyPasswordError::InvalidPassword => Self::InvalidCredentials,
+        }
+    }
+}
+
+impl From<GetUserError> for AuthError {
+    fn from(value: GetUserError) -> Self {
+        match value {
+            GetUserError::NotFound => Self::Unauthenticated,
+        }
+    }
+}
+
+impl From<ParseTokenError> for AuthError {
+    fn from(value: ParseTokenError) -> Self {
+        match value {
+            ParseTokenError::Invalid => Self::Unauthenticated,
+        }
+    }
+}
+
+impl From<DecodeIdError> for AuthError {
+    fn from(value: DecodeIdError) -> Self {
+        match value {
+            DecodeIdError::InvalidFormat => Self::Unauthenticated,
         }
     }
 }

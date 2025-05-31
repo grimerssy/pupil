@@ -1,4 +1,5 @@
 use educe::Educe;
+use serde::Serialize;
 
 use crate::app::{
     localization::LocalizedError,
@@ -8,7 +9,7 @@ use crate::app::{
 const MIN_LENGTH: usize = 2;
 const MAX_LENGTH: usize = 50;
 
-#[derive(Educe, Clone, Debug, sqlx::Type)]
+#[derive(Educe, Clone, Debug, Serialize, sqlx::Type)]
 #[educe(Into(String))]
 #[sqlx(transparent)]
 pub struct Name(String);

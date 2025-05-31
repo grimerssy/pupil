@@ -1,0 +1,12 @@
+<div class="flex">
+  <a href="/" class="btn btn-ghost">
+    {{ localize(key="welcome-user", lang=locale, user=context.data.user.name) }}
+  </a>
+  <div class="divider divider-horizontal"></div>
+  <button
+    onclick="window.localStorage.removeItem('accessToken'); window.location.reload()"
+    class="btn btn-ghost"
+  >
+    {{ localize(key="logout-action", lang=locale) }}
+  </button>
+</div>

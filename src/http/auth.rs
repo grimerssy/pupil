@@ -15,7 +15,7 @@ use crate::{
         AppContext, AppError,
     },
     domain::{
-        auth::{LoginData, LoginError, SignupData, SignupError},
+        auth::{LoginData, LoginError, SignupData, SignupError, User},
         token::AuthToken,
     },
     Error,
@@ -26,6 +26,8 @@ use super::{
     middleware::{template::Template, view::View},
     serialize_secret,
 };
+
+const PROFILE_LINK: &str = "profile-link.html";
 
 const SIGNUP_PAGE: &str = "signup.html";
 
@@ -40,7 +42,10 @@ pub fn auth_routes() -> Router<AppContext> {
     let login = Router::new()
         .route("/", get(login_page))
         .route("/", post(handle_login));
-    Router::new().nest("/signup", signup).nest("/login", login)
+    Router::new()
+        .route("/profile-link", get(profile_link))
+        .nest("/signup", signup)
+        .nest("/login", login)
 }
 
 type HttpSignupError = Error<AppError<SignupError>, SignupForm>;
@@ -53,6 +58,10 @@ pub async fn singup_page() -> Template<()> {
 
 pub async fn login_page() -> Template<()> {
     Template::new(LOGIN_PAGE, ())
+}
+
+pub async fn profile_link(user: User) -> Template<ProfileLinkData> {
+    Template::new(PROFILE_LINK, ProfileLinkData { user })
 }
 
 pub async fn handle_signup(
@@ -75,6 +84,12 @@ pub async fn handle_login(
         .await
         .map(|access_token| View::new(AUTH_TOKEN_SCRIPT, LoginResponse { access_token }))
         .map_err(|error| View::new(LOGIN_PAGE, error.with_input(form_copy)))
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfileLinkData {
+    user: User,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

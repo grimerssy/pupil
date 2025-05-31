@@ -1,12 +1,12 @@
 use std::time::Duration;
 
 use anyhow::Context;
-use jsonwebtoken::{get_current_timestamp, EncodingKey, Header};
+use jsonwebtoken::{get_current_timestamp, DecodingKey, EncodingKey, Header, Validation};
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds};
 
-use crate::domain::{id::UserId, token::AuthToken};
+use crate::domain::{auth::ParseTokenError, id::UserId, token::AuthToken};
 
 #[serde_as]
 #[derive(Clone, Debug, Deserialize)]
@@ -23,7 +23,7 @@ pub struct TokenIssuer {
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TokenClaims {
+struct TokenClaims {
     iat: u64,
     exp: u64,
     user_id: UserId,
@@ -51,4 +51,19 @@ pub fn issue_token(issuer: &TokenIssuer, user_id: UserId) -> crate::Result<AuthT
     .map(AuthToken::new)
     .context("encode jwt")?;
     Ok(token)
+}
+
+#[tracing::instrument(skip(issuer), ret(level = "debug") err(Debug, level = "debug"))]
+pub fn parse_token(
+    issuer: &TokenIssuer,
+    token: AuthToken,
+) -> crate::Result<UserId, ParseTokenError> {
+    let claims = jsonwebtoken::decode::<TokenClaims>(
+        &Into::<String>::into(token),
+        &DecodingKey::from_secret(issuer.config.secret.expose_secret().as_bytes()),
+        &Validation::default(),
+    )
+    .map(|token| token.claims)
+    .map_err(|_| crate::Error::expected(ParseTokenError::Invalid))?;
+    Ok(claims.user_id)
 }

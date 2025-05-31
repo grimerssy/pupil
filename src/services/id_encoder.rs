@@ -6,7 +6,10 @@ use squint::{
     Id,
 };
 
-use crate::domain::id::{DbUserId, UserId};
+use crate::domain::{
+    auth::DecodeIdError,
+    id::{DbUserId, UserId},
+};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct IdConfig {
@@ -26,7 +29,14 @@ impl IdEncoder {
     }
 }
 
-pub fn encode_user_id(encoder: &IdEncoder, raw_id: DbUserId) -> UserId {
+pub fn encode_user_id(encoder: &IdEncoder, raw_id: DbUserId) -> crate::Result<UserId> {
     let id = Id::new(raw_id.into(), &encoder.cipher);
-    UserId::new(id)
+    Ok(UserId::new(id))
+}
+
+pub fn decode_user_id(encoder: &IdEncoder, id: UserId) -> crate::Result<DbUserId, DecodeIdError> {
+    let id: Id<{ squint::tag("user") }> = id.into();
+    id.to_raw(&encoder.cipher)
+        .map(DbUserId::new)
+        .map_err(|_| crate::Error::expected(DecodeIdError::InvalidFormat))
 }

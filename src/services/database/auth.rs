@@ -1,6 +1,7 @@
 use crate::domain::{
-    auth::{DatabaseUser, FindUserError, NewUser, SaveNewUserError},
+    auth::{FindUserError, GetUserError, NewUser, SaveNewUserError, DbUser},
     email::MaybeEmail,
+    id::DbUserId,
 };
 
 use super::{sql_error, Database};
@@ -33,10 +34,23 @@ pub async fn save_new_user(
 }
 
 #[tracing::instrument(skip(db), ret(level = "debug") err(Debug, level = "debug"))]
-pub async fn find_user(
-    db: &Database,
-    email: &MaybeEmail,
-) -> crate::Result<DatabaseUser, FindUserError> {
+pub async fn get_user(db: &Database, db_id: &DbUserId) -> crate::Result<DbUser, GetUserError> {
+    sqlx::query_as(
+        "
+        select id, email, name, password_hash, role
+        from users
+        where id = $1
+        ",
+    )
+    .bind(db_id)
+    .fetch_optional(&db.pool)
+    .await
+    .map_err(sql_error)?
+    .ok_or(crate::Error::expected(GetUserError::NotFound))
+}
+
+#[tracing::instrument(skip(db), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn find_user(db: &Database, email: &MaybeEmail) -> crate::Result<DbUser, FindUserError> {
     sqlx::query_as(
         "
         select id, email, name, password_hash, role

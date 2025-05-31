@@ -8,13 +8,15 @@
     <div class="navbar-end">
       {% include "components/theme-controller.html" %}
       <div class="divider divider-horizontal"></div>
-      <a href="/auth/signup" class="btn btn-ghost">
-        {{ localize(key="signup", lang=locale) }}
-      </a>
-      <div class="divider divider-horizontal"></div>
-      <a href="/auth/login" class="btn btn-ghost">
-        {{ localize(key="login", lang=locale) }}
-      </a>
+      <div class="flex" hx-get="/auth/profile-link" hx-trigger="load" hx-target-error="none">
+        <a href="/auth/signup" class="btn btn-ghost">
+          {{ localize(key="signup", lang=locale) }}
+        </a>
+        <div class="divider divider-horizontal"></div>
+        <a href="/auth/login" class="btn btn-ghost">
+          {{ localize(key="login", lang=locale) }}
+        </a>
+      </div>
     </div>
   </nav>
 </header>
