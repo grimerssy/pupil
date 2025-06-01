@@ -3,10 +3,10 @@ use crate::{
     domain::{
         auth::*,
         email::MaybeEmail,
-        user_id::{DbUserId, UserId},
         password::{MaybePassword, Password, PasswordHash},
         role::Role,
         token::AuthToken,
+        user_id::{DbUserId, UserId},
     },
     services::{
         database::auth::{find_user, get_user, save_new_user},

@@ -4,10 +4,10 @@ use crate::app::localization::LocalizedError;
 
 use crate::domain::{
     email::{Email, MaybeEmail},
-    user_id::{DbUserId, UserId},
     name::Name,
     password::{MaybePassword, Password, PasswordHash},
     token::AuthToken,
+    user_id::{DbUserId, UserId},
 };
 
 use super::role::Role;
