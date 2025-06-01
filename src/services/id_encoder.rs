@@ -8,7 +8,7 @@ use squint::{
 
 use crate::domain::{
     auth::DecodeIdError,
-    id::{DbUserId, UserId},
+    user_id::{DbUserId, UserId},
 };
 
 #[derive(Clone, Debug, Deserialize)]

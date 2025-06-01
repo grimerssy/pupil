@@ -14,13 +14,11 @@ const MAX_LENGTH: usize = 50;
 #[sqlx(transparent)]
 pub struct Name(String);
 
-impl TryFrom<String> for Name {
-    type Error = ValidationFailure<String>;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
+impl Name {
+    pub fn new(name: String) -> Result<Self, ValidationFailure<String>> {
         let is_char_valid =
             |c: char| c.is_alphabetic() || c.is_whitespace() || c == '-' || c == '\'';
-        Validation::new(value)
+        Validation::new(name)
             .check_or_else(
                 |v| v.len() >= MIN_LENGTH,
                 || LocalizedError::new("NAME_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
@@ -35,5 +33,13 @@ impl TryFrom<String> for Name {
             )
             .finish()
             .map(Self)
+    }
+}
+
+impl TryFrom<String> for Name {
+    type Error = ValidationFailure<String>;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(value)
     }
 }

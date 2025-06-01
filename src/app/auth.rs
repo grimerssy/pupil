@@ -3,7 +3,7 @@ use crate::{
     domain::{
         auth::*,
         email::MaybeEmail,
-        id::{DbUserId, UserId},
+        user_id::{DbUserId, UserId},
         password::{MaybePassword, Password, PasswordHash},
         role::Role,
         token::AuthToken,
@@ -113,8 +113,15 @@ async fn authenticate_with(
         password_hash: _,
         role,
     } = storage.get_user(&db_id).await.map_err(crate::Error::cast)?;
-    let id = encoder.encode_user_id(id).map_err(crate::Error::from_internal)?;
-    Ok(User { id, email, name, role })
+    let id = encoder
+        .encode_user_id(id)
+        .map_err(crate::Error::from_internal)?;
+    Ok(User {
+        id,
+        email,
+        name,
+        role,
+    })
 }
 
 impl Signup for AppContext {

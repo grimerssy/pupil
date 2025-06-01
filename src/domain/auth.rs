@@ -4,7 +4,7 @@ use crate::app::localization::LocalizedError;
 
 use crate::domain::{
     email::{Email, MaybeEmail},
-    id::{DbUserId, UserId},
+    user_id::{DbUserId, UserId},
     name::Name,
     password::{MaybePassword, Password, PasswordHash},
     token::AuthToken,

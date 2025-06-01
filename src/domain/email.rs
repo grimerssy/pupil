@@ -21,11 +21,9 @@ pub struct Email(String);
 #[sqlx(transparent)]
 pub struct MaybeEmail(String);
 
-impl TryFrom<String> for Email {
-    type Error = ValidationFailure<String>;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Validation::new(value)
+impl Email {
+    pub fn new(email: String) -> Result<Self, ValidationFailure<String>> {
+        Validation::new(email)
             .check_or_else(
                 |v| EmailAddress::from_str(v).is_ok(),
                 || LocalizedError::new("INVALID_EMAIL"),
@@ -39,8 +37,22 @@ impl TryFrom<String> for Email {
     }
 }
 
+impl MaybeEmail {
+    pub fn new(email: String) -> Self {
+        Self(email)
+    }
+}
+
+impl TryFrom<String> for Email {
+    type Error = ValidationFailure<String>;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
 impl From<String> for MaybeEmail {
     fn from(value: String) -> Self {
-        Self(value)
+        Self::new(value)
     }
 }

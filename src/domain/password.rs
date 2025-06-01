@@ -25,11 +25,9 @@ pub struct PasswordHash(SecretString);
 #[educe(Into(SecretString))]
 pub struct MaybePassword(SecretString);
 
-impl TryFrom<SecretString> for Password {
-    type Error = ValidationFailure<SecretString>;
-
-    fn try_from(value: SecretString) -> Result<Self, Self::Error> {
-        Validation::new(value)
+impl Password {
+    pub fn new(password: SecretString) -> Result<Self, ValidationFailure<SecretString>> {
+        Validation::new(password)
             .check_or_else(
                 |v| v.expose_secret().len() >= MIN_LENGTH,
                 || LocalizedError::new("PASSWORD_TOO_SHORT").with_number("min", MIN_LENGTH as f64),
@@ -59,9 +57,29 @@ impl TryFrom<SecretString> for Password {
     }
 }
 
+impl PasswordHash {
+    pub fn new(value: SecretString) -> Self {
+        Self(value)
+    }
+}
+
+impl MaybePassword {
+    pub fn new(password: SecretString) -> Self {
+        Self(password)
+    }
+}
+
+impl TryFrom<SecretString> for Password {
+    type Error = ValidationFailure<SecretString>;
+
+    fn try_from(value: SecretString) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
 impl From<SecretString> for MaybePassword {
     fn from(value: SecretString) -> Self {
-        Self(value)
+        Self::new(value)
     }
 }
 
@@ -80,12 +98,6 @@ impl ExposeSecret<str> for PasswordHash {
 impl ExposeSecret<str> for MaybePassword {
     fn expose_secret(&self) -> &str {
         self.0.expose_secret()
-    }
-}
-
-impl PasswordHash {
-    pub fn new(value: SecretString) -> Self {
-        Self(value)
     }
 }
 

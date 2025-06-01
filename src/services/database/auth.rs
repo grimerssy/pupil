@@ -1,7 +1,7 @@
 use crate::domain::{
-    auth::{FindUserError, GetUserError, NewUser, SaveNewUserError, DbUser},
+    auth::{DbUser, FindUserError, GetUserError, NewUser, SaveNewUserError},
     email::MaybeEmail,
-    id::DbUserId,
+    user_id::DbUserId,
 };
 
 use super::{sql_error, Database};
