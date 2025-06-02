@@ -4,8 +4,6 @@ system-theme = Авто
 light-theme = Світла
 dark-theme = Темна
 
-welcome-message = Увійдіть щоб продовжити
-
 signup = Реєстрація
 signup-action = Зареєструватися
 
@@ -16,10 +14,16 @@ logout-action = Вийти
 
 welcome-user = Вітаю, {$user}!
 
+student = Студент
+
+grade = Оцінка
+
+subject = Дисципліна
+
 error-internal = Щось пішло не так
 
 error-not-found = Запитаний ресурс не знайдено
 
 error-invalid-credentials = Невірний логін або пароль
 
-error-unauthorized = Увійдіть в підходящий акаунт для доступу до цього ресурсу
+error-unauthorized = Увійдіть щоб продовжити

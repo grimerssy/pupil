@@ -23,7 +23,7 @@ tower-http = { version = "0.6.2", features = ["fs", "catch-panic", "trace"] }
 accept-header = "0.2.3"
 accept-language = "3.1.0"
 
-sqlx = { version = "0.8.5", default-features = false, features = ["derive", "runtime-tokio-rustls", "postgres"] }
+sqlx = { version = "0.8.5", default-features = false, features = ["derive", "runtime-tokio-rustls", "postgres", "rust_decimal"] }
 squint = { version = "0.1.4", features = ["zeroize"] }
 
 unic-langid = { version = "0.9.5", features = ["serde"] }
@@ -39,6 +39,7 @@ jsonwebtoken = "9.3.1"
 const-fnv1a-hash = "1.1.0"
 
 email_address = { version = "0.2.9", default-features = false }
+rust_decimal = "1.37.1"
 
 config = "0.15.11"
 strum = { version = "0.27.1", features = ["derive"] }

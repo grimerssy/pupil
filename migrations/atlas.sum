@@ -1,3 +1,5 @@
-h1:3Qfn8ebrbyRLJcS2BgslNpKtU8aYf7I88U7POzDnXAI=
+h1:rpPd04bu0xjf3OkUhBXE80pRseyObsgyXjgz7yxC4Wg=
 20250428193606_create_users_table.sql h1:hazRsH6ddqYmE17SbuKO47l4Uh2JJDnlM5uv3yKHOK0=
 20250530165826_add_roles.sql h1:kDCV+GWUCVRPybcZ7zpvULzM2Wi0abLTxLsrQR01KzM=
+20250601212202_add_grades.sql h1:MAPZ34hMXAt50v5ULpTokcKyPtxvynCAJ2InVbSP7Xo=
+20250602162135_grades_primary_key.sql h1:LOWWyjFKcl7lkOFNYE1YWQmnOtYnp8xEzPKwwgKJbRE=

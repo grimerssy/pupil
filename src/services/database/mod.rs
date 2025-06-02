@@ -3,6 +3,7 @@ use serde::Deserialize;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
 
 pub mod auth;
+pub mod grades;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct DatabaseConfig {

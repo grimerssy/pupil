@@ -1,0 +1,16 @@
+<table class="table-xl table-zebra table w-dvw">
+  <thead>
+    <tr>
+      <th>{{ localize(key="subject", lang=locale) }}</th>
+      <th>{{ localize(key="grade", lang=locale) }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for record in context.data %}
+      <tr>
+        <td>{{ record.subjectTitle }}</td>
+        <td>{{ record.grade }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

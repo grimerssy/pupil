@@ -1,3 +1,4 @@
+use grades::grade_routes;
 pub use middleware::template::{LocaleNegotiator, TemplateRenderer};
 
 use auth::auth_routes;
@@ -20,6 +21,7 @@ mod error;
 mod middleware;
 
 mod auth;
+mod grades;
 mod static_files;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -49,6 +51,7 @@ fn root_router() -> Router<AppContext> {
         .route("/", get(homepage))
         .route("/test", get(print_user))
         .nest("/auth", auth_routes())
+        .nest("/grades", grade_routes())
 }
 
 async fn homepage() -> Template<()> {

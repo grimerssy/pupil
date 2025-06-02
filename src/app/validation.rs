@@ -35,15 +35,21 @@ impl<I> Validation<I> {
         Self { state }
     }
 
+    pub fn error(mut self, error: LocalizedError) -> Self {
+        self.state.errors.push(error);
+        self
+    }
+
     pub fn check_or_else(
-        mut self,
+        self,
         predicate: impl Fn(&I) -> bool,
         error: impl FnOnce() -> LocalizedError,
     ) -> Self {
         if !predicate(&self.state.input) {
-            self.state.errors.push(error());
+            self.error(error())
+        } else {
+            self
         }
-        self
     }
 
     pub fn finish(self) -> Result<I, ValidationFailure<I>> {
