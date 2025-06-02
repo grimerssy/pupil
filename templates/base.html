@@ -15,11 +15,7 @@
     class="flex min-h-screen flex-col"
   >
     {% include "components/header.html" %}
-    <div class="flex grow">
-      <div class="m-auto">
-        {% block content %}
-        {% endblock content %}
-      </div>
-    </div>
+    {% block content %}
+    {% endblock content %}
   </body>
 </html>

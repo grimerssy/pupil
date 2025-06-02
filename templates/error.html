@@ -2,9 +2,13 @@
 {% import "components/error.html" as error %}
 
 {% block content %}
-  {% if context.status == "error" %}
-    <div class="text-2xl font-semibold">
-      {{ error::error(error=context.data) }}
+  <div class="flex grow">
+    <div class="m-auto">
+      {% if context.status == "error" %}
+        <div class="text-2xl font-semibold">
+          {{ error::error(error=context.data) }}
+        </div>
+      {% endif %}
     </div>
-  {% endif %}
+  </div>
 {% endblock content %}

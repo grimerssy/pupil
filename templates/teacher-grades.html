@@ -1,13 +1,32 @@
-<table class="table-xl table-zebra table w-dvw">
+<table class="table-xl table-zebra table w-dvw" id="grades">
   <thead>
     <tr>
       <th>{{ localize(key="student", lang=locale) }}</th>
-      <th>{{ localize(key="subject", lang=locale) }}</th>
+      <th>
+        <details class="dropdown">
+          <summary>{{ localize(key="subject", lang=locale) }}</summary>
+          <ul
+            class="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
+          >
+            {% for subject in context.data.subjects %}
+              <li>
+                <a
+                  hx-get="/grades?subject={{ subject.id }}"
+                  hx-target="#grades"
+                  hx-swap="outerHTML"
+                >
+                  {{ subject.title }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      </th>
       <th>{{ localize(key="grade", lang=locale) }}</th>
     </tr>
   </thead>
   <tbody>
-    {% for record in context.data %}
+    {% for record in context.data.grades %}
       <tr>
         <td>{{ record.studentName }}</td>
         <td>{{ record.subjectTitle }}</td>

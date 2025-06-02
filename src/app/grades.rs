@@ -1,22 +1,35 @@
 use crate::{
     domain::{
         auth::{DecodeUserId, EncodeUserId},
-        grades::{
-            DbGradeRecord, GetDbGrades, GetDbStudentGrades, GetGrades, GetStudentGrades,
-            GradeRecord, StudentGrade,
-        },
+        grades::*,
+        subject_id::SubjectId,
         user_id::{DbUserId, UserId},
     },
     error::ErrorKind,
-    services::database::grades::{get_db_grades, get_db_student_grades},
+    services::database::grades::{get_db_grades, get_db_student_grades, get_subjects},
 };
 
 use super::AppContext;
 
-impl GetGrades for AppContext {
+impl GetSubjects for AppContext {
     #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
-    async fn get_grades(&self) -> crate::Result<Vec<GradeRecord>> {
-        get_grades_with(self, self).await
+    async fn get_subjects(&self) -> crate::Result<Vec<Subject>> {
+        get_subjects(&self.database).await
+    }
+}
+
+#[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn get_grades(
+    ctx: &AppContext,
+    subject: Option<String>,
+) -> crate::Result<Vec<GradeRecord>> {
+    let subject = subject.and_then(|subject| SubjectId::new(subject).ok());
+    ctx.get_grades(subject).await
+}
+
+impl GetGrades for AppContext {
+    async fn get_grades(&self, subject_id: Option<SubjectId>) -> crate::Result<Vec<GradeRecord>> {
+        get_grades_with(self, self, subject_id).await
     }
 }
 
@@ -30,8 +43,9 @@ impl GetStudentGrades for AppContext {
 async fn get_grades_with(
     storage: &impl GetDbGrades,
     encoder: &impl EncodeUserId,
+    subject_id: Option<SubjectId>,
 ) -> crate::Result<Vec<GradeRecord>> {
-    let db_grades = storage.get_db_grades().await?;
+    let db_grades = storage.get_db_grades(subject_id).await?;
     let mut grades = Vec::with_capacity(db_grades.len());
     for grade in db_grades {
         let DbGradeRecord {
@@ -70,8 +84,11 @@ async fn get_student_grades_with(
 }
 
 impl GetDbGrades for AppContext {
-    async fn get_db_grades(&self) -> crate::Result<Vec<DbGradeRecord>> {
-        get_db_grades(&self.database).await
+    async fn get_db_grades(
+        &self,
+        subject_id: Option<SubjectId>,
+    ) -> crate::Result<Vec<DbGradeRecord>> {
+        get_db_grades(&self.database, subject_id).await
     }
 }
 
