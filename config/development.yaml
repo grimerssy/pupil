@@ -20,7 +20,7 @@ hasher:
   parallelism_factor: 1
   output_length: 32
 jwt:
-  ttl: 900
+  ttl: 9000
   secret: ""
 templates:
   path: "templates/**/*.html"
