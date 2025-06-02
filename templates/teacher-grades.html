@@ -8,6 +8,11 @@
           <ul
             class="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
           >
+            <li>
+              <a hx-get="/grades" hx-target="#grades" hx-swap="outerHTML">
+                {{ localize(key="all", lang=locale) }}
+              </a>
+            </li>
             {% for subject in context.data.subjects %}
               <li>
                 <a

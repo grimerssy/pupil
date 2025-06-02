@@ -1,5 +1,7 @@
 app-title = Pupil заклад
 
+all = Всі
+
 system-theme = Авто
 light-theme = Світла
 dark-theme = Темна
