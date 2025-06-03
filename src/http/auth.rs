@@ -52,19 +52,19 @@ type HttpSignupError = Error<AppError<SignupError>, SignupForm>;
 
 type HttpLoginError = Error<AppError<LoginError>, LoginForm>;
 
-pub async fn singup_page() -> Template<()> {
+async fn singup_page() -> Template<()> {
     Template::new(SIGNUP_PAGE, ())
 }
 
-pub async fn login_page() -> Template<()> {
+async fn login_page() -> Template<()> {
     Template::new(LOGIN_PAGE, ())
 }
 
-pub async fn profile_link(user: User) -> Template<ProfileLinkData> {
+async fn profile_link(user: User) -> Template<ProfileLinkData> {
     Template::new(PROFILE_LINK, ProfileLinkData { user })
 }
 
-pub async fn handle_signup(
+async fn handle_signup(
     State(ctx): State<AppContext>,
     Form(form): Form<SignupForm>,
 ) -> Result<Redirect, View<HttpSignupError>> {
@@ -75,7 +75,7 @@ pub async fn handle_signup(
         .map_err(|error| View::new(SIGNUP_PAGE, error.with_input(form_copy)))
 }
 
-pub async fn handle_login(
+async fn handle_login(
     State(ctx): State<AppContext>,
     Form(form): Form<LoginForm>,
 ) -> Result<View<LoginResponse>, View<HttpLoginError>> {
@@ -88,12 +88,12 @@ pub async fn handle_login(
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ProfileLinkData {
+struct ProfileLinkData {
     user: User,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SignupForm {
+struct SignupForm {
     email: String,
     #[serde(serialize_with = "serialize_secret")]
     password: SecretString,
@@ -101,7 +101,7 @@ pub struct SignupForm {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LoginForm {
+struct LoginForm {
     email: String,
     #[serde(serialize_with = "serialize_secret")]
     password: SecretString,
@@ -109,7 +109,7 @@ pub struct LoginForm {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LoginResponse {
+struct LoginResponse {
     access_token: AuthToken,
 }
 
