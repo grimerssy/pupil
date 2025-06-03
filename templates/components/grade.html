@@ -1,0 +1,20 @@
+{% macro grade(grade) %}
+  <tr hx-target="this" hx-swap="outerHTML">
+    <td>{{ grade.studentName }}</td>
+    <td>{{ grade.subjectTitle }}</td>
+    <td><div class="w-24">{{ grade.grade }}</div></td>
+    <td class="flex gap-2 w-48">
+      <button
+        class="btn"
+        hx-get="/grades/{{ grade.subjectId }}/{{ grade.studentId }}/edit"
+      >
+        {{ localize(key="edit", lang=locale) }}
+      </button>
+      <button class="btn" hx-get="/empty">
+        {{ localize(key="delete", lang=locale) }}
+      </button>
+    </td>
+  </tr>
+{% endmacro %}
+
+{{ self::grade(grade=context.data) }}

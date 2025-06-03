@@ -2,6 +2,14 @@ app-title = Pupil Internal
 
 all = All
 
+edit = Edit
+
+actions = Actions
+
+save = Save
+
+delete = Delete
+
 system-theme = System
 light-theme = Light
 dark-theme = Dark

@@ -1,3 +1,5 @@
+{% import "components/grade.html" as grade %}
+
 <table class="table-xl table-zebra table w-dvw" id="grades">
   <thead>
     <tr>
@@ -28,15 +30,12 @@
         </details>
       </th>
       <th>{{ localize(key="grade", lang=locale) }}</th>
+      <th>{{ localize(key="actions", lang=locale) }}</th>
     </tr>
   </thead>
   <tbody>
-    {% for record in context.data.grades %}
-      <tr>
-        <td>{{ record.studentName }}</td>
-        <td>{{ record.subjectTitle }}</td>
-        <td>{{ record.grade }}</td>
-      </tr>
+    {% for grade in context.data.grades %}
+      {{ grade::grade(grade=grade) }}
     {% endfor %}
   </tbody>
 </table>

@@ -1,0 +1,20 @@
+{% set grade = context.data %}
+
+<tr hx-target="this" hx-swap="outerHTML">
+  <form>
+    <td>{{ grade.studentName }}</td>
+    <td>{{ grade.subjectTitle }}</td>
+    <td>
+      <input type="text" name="grade" value="{{ grade.grade }}" class="input w-24 text-xl" />
+    </td>
+    <td>
+      <button
+        type="submit"
+        class="btn"
+        hx-put="/grades/{{ grade.subjectId }}/{{ grade.studentId }}"
+      >
+        {{ localize(key="save", lang=locale) }}
+      </button>
+    </td>
+  </form>
+</tr>

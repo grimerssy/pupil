@@ -1,5 +1,5 @@
 use crate::domain::{
-    grades::{DbGradeRecord, StudentGrade, Subject},
+    grades::{DbGradeRecord, GetGradeError, StudentGrade, Subject},
     subject_id::SubjectId,
     user_id::DbUserId,
 };
@@ -17,6 +17,36 @@ pub async fn get_subjects(db: &Database) -> crate::Result<Vec<Subject>> {
     .fetch_all(&db.pool)
     .await
     .map_err(sql_error)
+}
+
+#[tracing::instrument(skip(db), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn get_db_grade(
+    db: &Database,
+    subject_id: SubjectId,
+    student_id: DbUserId,
+) -> crate::Result<DbGradeRecord, GetGradeError> {
+    sqlx::query_as(
+        "
+        select
+            users.id as student_id,
+            users.name as student_name,
+            grades.value as grade,
+            subjects.id as subject_id,
+            subjects.title as subject_title
+        from users
+        join grades on users.id = grades.user_id
+        join subjects on grades.subject_id = subjects.id
+        where subjects.id = $1
+          and users.id = $2
+        limit 1
+        ",
+    )
+    .bind(&subject_id)
+    .bind(&student_id)
+    .fetch_optional(&db.pool)
+    .await
+    .map_err(sql_error)?
+    .ok_or(crate::Error::expected(GetGradeError::NotFound))
 }
 
 #[tracing::instrument(skip(db), ret(level = "debug") err(Debug, level = "debug"))]

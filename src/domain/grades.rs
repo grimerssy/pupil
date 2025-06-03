@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use crate::app::localization::LocalizedError;
+
 use super::{
     email::Email,
     grade::Grade,
@@ -11,6 +13,14 @@ use super::{
 
 pub trait GetSubjects {
     async fn get_subjects(&self) -> crate::Result<Vec<Subject>>;
+}
+
+pub trait GetGrade {
+    async fn get_grade(&self, subject_id: SubjectId, student_id: UserId) -> crate::Result<GradeRecord, GetGradeError>;
+}
+
+pub trait GetDbGrade {
+    async fn get_db_grade(&self, subject_id: SubjectId, student_id: DbUserId) -> crate::Result<DbGradeRecord, GetGradeError>;
 }
 
 pub trait GetStudentGrades {
@@ -68,4 +78,17 @@ pub struct Student {
     pub id: UserId,
     pub email: Email,
     pub name: Name,
+}
+
+#[derive(Debug)]
+pub enum GetGradeError {
+    NotFound,
+}
+
+impl From<GetGradeError> for LocalizedError {
+    fn from(value: GetGradeError) -> Self {
+        match value {
+            GetGradeError::NotFound => Self::new("NOT_FOUND"),
+        }
+    }
 }

@@ -1,3 +1,7 @@
+use std::str::FromStr;
+
+use squint::Id;
+
 use crate::{
     domain::{
         auth::{DecodeUserId, EncodeUserId},
@@ -6,7 +10,9 @@ use crate::{
         user_id::{DbUserId, UserId},
     },
     error::ErrorKind,
-    services::database::grades::{get_db_grades, get_db_student_grades, get_subjects},
+    services::database::grades::{
+        get_db_grade, get_db_grades, get_db_student_grades, get_subjects,
+    },
 };
 
 use super::AppContext;
@@ -19,12 +25,36 @@ impl GetSubjects for AppContext {
 }
 
 #[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn get_grade(
+    ctx: &AppContext,
+    subject_id: String,
+    student_id: String,
+) -> crate::Result<GradeRecord, GetGradeError> {
+    let subject_id =
+        SubjectId::new(subject_id).map_err(|_| crate::Error::expected(GetGradeError::NotFound))?;
+    let student_id = Id::from_str(&student_id)
+        .map(UserId::new)
+        .map_err(|_| crate::Error::expected(GetGradeError::NotFound))?;
+    ctx.get_grade(subject_id, student_id).await
+}
+
+#[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
 pub async fn get_grades(
     ctx: &AppContext,
     subject: Option<String>,
 ) -> crate::Result<Vec<GradeRecord>> {
     let subject = subject.and_then(|subject| SubjectId::new(subject).ok());
     ctx.get_grades(subject).await
+}
+
+impl GetGrade for AppContext {
+    async fn get_grade(
+        &self,
+        subject_id: SubjectId,
+        student_id: UserId,
+    ) -> crate::Result<GradeRecord, GetGradeError> {
+        get_grade_with(self, self, self, subject_id, student_id).await
+    }
 }
 
 impl GetGrades for AppContext {
@@ -38,6 +68,37 @@ impl GetStudentGrades for AppContext {
     async fn get_student_grades(&self, student_id: UserId) -> crate::Result<Vec<StudentGrade>> {
         get_student_grades_with(self, self, student_id).await
     }
+}
+
+async fn get_grade_with(
+    decoder: &impl DecodeUserId,
+    storage: &impl GetDbGrade,
+    encoder: &impl EncodeUserId,
+    subject_id: SubjectId,
+    student_id: UserId,
+) -> crate::Result<GradeRecord, GetGradeError> {
+    let student_id = decoder
+        .decode_user_id(student_id)
+        .map_err(|_| crate::Error::expected(GetGradeError::NotFound))?;
+    let grade = storage.get_db_grade(subject_id, student_id).await?;
+    let DbGradeRecord {
+        student_id,
+        student_name,
+        grade,
+        subject_id,
+        subject_title,
+    } = grade;
+    let student_id = encoder
+        .encode_user_id(student_id)
+        .map_err(crate::Error::from_internal)?;
+    let grade = GradeRecord {
+        student_id,
+        student_name,
+        grade,
+        subject_id,
+        subject_title,
+    };
+    Ok(grade)
 }
 
 async fn get_grades_with(
@@ -81,6 +142,16 @@ async fn get_student_grades_with(
         },
     };
     storage.get_db_student_grades(student_id).await
+}
+
+impl GetDbGrade for AppContext {
+    async fn get_db_grade(
+        &self,
+        subject_id: SubjectId,
+        student_id: DbUserId,
+    ) -> crate::Result<DbGradeRecord, GetGradeError> {
+        get_db_grade(&self.database, subject_id, student_id).await
+    }
 }
 
 impl GetDbGrades for AppContext {

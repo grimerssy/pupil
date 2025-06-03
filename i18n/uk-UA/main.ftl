@@ -2,6 +2,14 @@ app-title = Pupil заклад
 
 all = Всі
 
+edit = Редагувати
+
+actions = Дії
+
+save = Зберегти
+
+delete = Видалити
+
 system-theme = Авто
 light-theme = Світла
 dark-theme = Темна
