@@ -1,6 +1,6 @@
 app-title = Pupil Internal
 
-all = Всі
+all = All
 
 system-theme = System
 light-theme = Light
