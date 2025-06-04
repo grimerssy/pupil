@@ -36,4 +36,4 @@ error-not-found = Requested resourse was not found
 
 error-invalid-credentials = Invalid login or password
 
-error-unauthori = Log in to continue
+error-unauthorized = Log in to continue
