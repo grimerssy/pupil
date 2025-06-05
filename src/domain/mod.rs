@@ -1,8 +1,10 @@
 pub mod auth;
 pub mod grades;
+pub mod keys;
 
 pub mod email;
 pub mod grade;
+pub mod key;
 pub mod name;
 pub mod password;
 pub mod role;

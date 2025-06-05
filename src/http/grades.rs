@@ -104,7 +104,7 @@ async fn grades_page(
 impl HttpError for GetGradeError {
     fn status_code(&self) -> StatusCode {
         match self {
-            GetGradeError::NotFound => StatusCode::NOT_FOUND,
+            Self::NotFound => StatusCode::NOT_FOUND,
         }
     }
 }

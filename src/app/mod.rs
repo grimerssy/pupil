@@ -14,6 +14,8 @@ use crate::services::{
 
 pub mod auth;
 pub mod grades;
+pub mod keys;
+
 pub mod localization;
 pub mod validation;
 

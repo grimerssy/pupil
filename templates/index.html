@@ -1,5 +1,5 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="text-xl" hx-get="/grades" hx-trigger="load"></div>
+  <div hx-get="/grades" hx-trigger="load"></div>
 {% endblock content %}

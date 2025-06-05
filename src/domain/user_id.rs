@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use squint::{tag, Id};
 
-#[derive(Educe, Debug, Clone, sqlx::Type)]
+#[derive(Educe, Debug, Clone, Copy, sqlx::Type)]
 #[educe(Into(i64))]
 #[sqlx(transparent)]
 pub struct DbUserId(i64);

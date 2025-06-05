@@ -16,6 +16,8 @@ email = Email address
 
 error-invalid-email = Given value is not a valid email address
 
+error-invalid-key = Given value is not a valid key
+
 error-email-too-long = {$max ->
     [one] {email} cannot be more than {$max} character long
    *[other] {email} cannot be more than {$max} characters long

@@ -1,0 +1,26 @@
+{% macro keys(keys) %}
+  <div
+    class="mx-auto flex w-full max-w-xl flex-col gap-5"
+    hx-target="this"
+    hx-swap="outerHTML"
+  >
+    <div class="flex justify-between">
+      <div class="text-3xl font-bold">
+        {{ localize(key="access-keys", lang=locale) }}
+      </div>
+      <button class="btn btn-success btn-lg" hx-post="/keys/gen">
+        {{ localize(key="add", lang=locale) }}
+      </button>
+    </div>
+    {% for key in keys %}
+      <div class="flex justify-between">
+        <div>{{ key }}</div>
+        <button class="btn btn-error" hx-delete="/keys/{{ key }}">
+          {{ localize(key="delete", lang=locale) }}
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{{ self::keys(keys=context.data) }}

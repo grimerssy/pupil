@@ -4,6 +4,7 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
 
 pub mod auth;
 pub mod grades;
+pub mod keys;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct DatabaseConfig {

@@ -17,3 +17,8 @@ create table grades (
     value numeric(5, 2),
     primary key (user_id, subject_id)
 );
+
+create table keys (
+    value uuid primary key,
+    user_id bigint not null references users (id) on delete cascade
+);

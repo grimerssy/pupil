@@ -8,6 +8,8 @@ actions = Дії
 
 save = Зберегти
 
+add = Додати
+
 delete = Видалити
 
 system-theme = Авто
@@ -29,6 +31,8 @@ student = Студент
 grade = Оцінка
 
 subject = Дисципліна
+
+access-keys = Ключі доступу
 
 error-internal = Щось пішло не так
 

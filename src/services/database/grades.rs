@@ -42,7 +42,7 @@ pub async fn get_db_grade(
         ",
     )
     .bind(&subject_id)
-    .bind(&student_id)
+    .bind(student_id)
     .fetch_optional(&db.pool)
     .await
     .map_err(sql_error)?
@@ -98,7 +98,7 @@ pub async fn get_db_student_grades(
         where grades.user_id = $1
         ",
     )
-    .bind(&student_id)
+    .bind(student_id)
     .fetch_all(&db.pool)
     .await
     .map_err(sql_error)

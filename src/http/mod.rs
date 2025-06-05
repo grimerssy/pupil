@@ -1,4 +1,5 @@
 use grades::grades_routes;
+use keys::keys_routes;
 pub use middleware::template::{LocaleNegotiator, TemplateRenderer};
 
 use auth::auth_routes;
@@ -22,6 +23,8 @@ mod middleware;
 
 mod auth;
 mod grades;
+mod keys;
+
 mod static_files;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -52,6 +55,7 @@ fn root_router() -> Router<AppContext> {
         .route("/empty", get(async || Html("")))
         .nest("/auth", auth_routes())
         .nest("/grades", grades_routes())
+        .nest("/keys", keys_routes())
 }
 
 async fn homepage() -> Template<()> {

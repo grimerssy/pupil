@@ -8,6 +8,8 @@ actions = Actions
 
 save = Save
 
+add = Add
+
 delete = Delete
 
 system-theme = System
@@ -29,6 +31,8 @@ student = Student
 grade = Grade
 
 subject = Subject
+
+access-keys = Access keys
 
 error-internal = An unexpected error occurred
 
