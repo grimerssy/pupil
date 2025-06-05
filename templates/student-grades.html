@@ -1,7 +1,7 @@
 {% import "components/keys.html" as keys %}
 
-<div class="flex flex-col gap-5">
-  <table class="table-xl table-zebra table">
+<div class="flex gap-5 flex-col lg:flex-row">
+  <table class="table-xl table-zebra table flex-1">
     <thead>
       <tr>
         <th>{{ localize(key="subject", lang=locale) }}</th>
@@ -17,6 +17,8 @@
       {% endfor %}
     </tbody>
   </table>
-  <div class="divider"></div>
-  <div hx-get="/keys" hx-trigger="load"></div>
+  <div class="divider lg:divider-horizontal"></div>
+  <div class="flex-1 lg:mt-5">
+    <div hx-get="/keys" hx-trigger="load"></div>
+  </div>
 </div>
