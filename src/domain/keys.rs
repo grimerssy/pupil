@@ -14,7 +14,11 @@ pub trait GenerateKey {
 }
 
 pub trait RemoveKey {
-    async fn remove_key(&self, student_id: UserId, key: Key) -> crate::Result<Vec<Key>, RemoveKeyError>;
+    async fn remove_key(
+        &self,
+        student_id: UserId,
+        key: Key,
+    ) -> crate::Result<Vec<Key>, RemoveKeyError>;
 }
 
 pub trait GetDbKeys {

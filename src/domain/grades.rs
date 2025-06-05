@@ -16,11 +16,19 @@ pub trait GetSubjects {
 }
 
 pub trait GetGrade {
-    async fn get_grade(&self, subject_id: SubjectId, student_id: UserId) -> crate::Result<GradeRecord, GetGradeError>;
+    async fn get_grade(
+        &self,
+        subject_id: SubjectId,
+        student_id: UserId,
+    ) -> crate::Result<GradeRecord, GetGradeError>;
 }
 
 pub trait GetDbGrade {
-    async fn get_db_grade(&self, subject_id: SubjectId, student_id: DbUserId) -> crate::Result<DbGradeRecord, GetGradeError>;
+    async fn get_db_grade(
+        &self,
+        subject_id: SubjectId,
+        student_id: DbUserId,
+    ) -> crate::Result<DbGradeRecord, GetGradeError>;
 }
 
 pub trait GetStudentGrades {

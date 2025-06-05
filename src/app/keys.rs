@@ -35,10 +35,13 @@ pub async fn remove_key(
     ctx.remove_key(student_id, key).await
 }
 
-
 impl RemoveKey for AppContext {
     #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
-    async fn remove_key(&self, student_id: UserId, key: Key) -> crate::Result<Vec<Key>, RemoveKeyError> {
+    async fn remove_key(
+        &self,
+        student_id: UserId,
+        key: Key,
+    ) -> crate::Result<Vec<Key>, RemoveKeyError> {
         remove_key_with(self, self, self, student_id, key).await
     }
 }

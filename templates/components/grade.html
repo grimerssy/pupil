@@ -3,7 +3,7 @@
     <td>{{ grade.studentName }}</td>
     <td>{{ grade.subjectTitle }}</td>
     <td><div class="w-24">{{ grade.grade }}</div></td>
-    <td class="flex gap-2 w-48">
+    <td class="flex w-48 gap-2">
       <button
         class="btn"
         hx-get="/grades/{{ grade.subjectId }}/{{ grade.studentId }}/edit"
