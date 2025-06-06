@@ -5,12 +5,12 @@
     <td><div class="w-24">{{ grade.grade }}</div></td>
     <td class="flex w-48 gap-2">
       <button
-        class="btn"
+        class="btn btn-soft btn-info"
         hx-get="/grades/{{ grade.subjectId }}/{{ grade.studentId }}/edit"
       >
         {{ localize(key="edit", lang=locale) }}
       </button>
-      <button class="btn" hx-get="/empty">
+      <button class="btn btn-soft btn-error" hx-get="/empty">
         {{ localize(key="delete", lang=locale) }}
       </button>
     </td>
