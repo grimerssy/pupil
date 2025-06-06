@@ -12,6 +12,9 @@ add = Add
 
 delete = Delete
 
+add-grade = Add a grade
+import-grades = Import grades
+
 system-theme = System
 light-theme = Light
 dark-theme = Dark

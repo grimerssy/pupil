@@ -1,41 +1,51 @@
 {% import "components/grade.html" as grade %}
 
-<table class="table-xl table-zebra table" id="grades">
-  <thead>
-    <tr>
-      <th>{{ localize(key="student", lang=locale) }}</th>
-      <th>
-        <details class="dropdown">
-          <summary>{{ localize(key="subject", lang=locale) }}</summary>
-          <ul
-            class="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
-          >
-            <li>
-              <a hx-get="/grades" hx-target="#grades" hx-swap="outerHTML">
-                {{ localize(key="all", lang=locale) }}
-              </a>
-            </li>
-            {% for subject in context.data.subjects %}
+<div class="flex flex-col">
+  <div class="m-5 flex gap-5">
+    <button class="btn btn-success btn-soft">
+      {{ localize(key="add-grade", lang=locale) }}
+    </button>
+    <button class="btn btn-success btn-soft">
+      {{ localize(key="import-grades", lang=locale) }}
+    </button>
+  </div>
+  <table class="table-xl table-zebra table" id="grades">
+    <thead>
+      <tr>
+        <th>{{ localize(key="student", lang=locale) }}</th>
+        <th>
+          <details class="dropdown">
+            <summary>{{ localize(key="subject", lang=locale) }}</summary>
+            <ul
+              class="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
+            >
               <li>
-                <a
-                  hx-get="/grades?subject={{ subject.id }}"
-                  hx-target="#grades"
-                  hx-swap="outerHTML"
-                >
-                  {{ subject.title }}
+                <a hx-get="/grades" hx-target="#grades" hx-swap="outerHTML">
+                  {{ localize(key="all", lang=locale) }}
                 </a>
               </li>
-            {% endfor %}
-          </ul>
-        </details>
-      </th>
-      <th>{{ localize(key="grade", lang=locale) }}</th>
-      <th>{{ localize(key="actions", lang=locale) }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for grade in context.data.grades %}
-      {{ grade::grade(grade=grade) }}
-    {% endfor %}
-  </tbody>
-</table>
+              {% for subject in context.data.subjects %}
+                <li>
+                  <a
+                    hx-get="/grades?subject={{ subject.id }}"
+                    hx-target="#grades"
+                    hx-swap="outerHTML"
+                  >
+                    {{ subject.title }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </details>
+        </th>
+        <th>{{ localize(key="grade", lang=locale) }}</th>
+        <th>{{ localize(key="actions", lang=locale) }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for grade in context.data.grades %}
+        {{ grade::grade(grade=grade) }}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

@@ -12,6 +12,9 @@ add = Додати
 
 delete = Видалити
 
+add-grade = Додати оцінку
+import-grades = Імпортувати оцінки
+
 system-theme = Авто
 light-theme = Світла
 dark-theme = Темна
