@@ -29,6 +29,8 @@ logout-action = Вийти
 
 welcome-user = Вітаю, {$user}!
 
+general-access = Доступ: загальний
+
 student = Студент
 
 grade = Оцінка

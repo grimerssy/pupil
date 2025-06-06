@@ -12,14 +12,21 @@
         {{ localize(key="add", lang=locale) }}
       </button>
     </div>
-    {% for key in keys %}
-      <div class="flex justify-between">
-        <div>{{ key }}</div>
-        <button class="btn btn-soft btn-error" hx-delete="/keys/{{ key }}">
-          {{ localize(key="delete", lang=locale) }}
-        </button>
-      </div>
-    {% endfor %}
+    <div class="flex flex-col gap-7">
+      {% for key in keys %}
+        <div class="flex items-center justify-between">
+          <div class="flex flex-col gap-1">
+            <div>{{ key }}</div>
+            <div class="badge badge-soft">
+              {{ localize(key="general-access", lang=locale) }}
+            </div>
+          </div>
+          <button class="btn btn-soft btn-error" hx-delete="/keys/{{ key }}">
+            {{ localize(key="delete", lang=locale) }}
+          </button>
+        </div>
+      {% endfor %}
+    </div>
   </div>
 {% endmacro %}
 

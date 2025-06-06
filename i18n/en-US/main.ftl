@@ -29,6 +29,8 @@ logout-action = Logout
 
 welcome-user = Welcome, {$user}!
 
+general-access = Access: general
+
 student = Student
 
 grade = Grade
