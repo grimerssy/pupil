@@ -1,4 +1,4 @@
-app-title = Pupil Internal
+app-title = Pupil
 
 all = All
 

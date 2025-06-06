@@ -1,4 +1,4 @@
-app-title = Pupil заклад
+app-title = Pupil
 
 all = Всі
 
