@@ -1,7 +1,7 @@
 use rust_decimal::Decimal;
 use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Percentile(u8);
 
 impl Percentile {
@@ -11,15 +11,5 @@ impl Percentile {
         }
         let percent = u8::try_from(percentile * Decimal::ONE_HUNDRED).unwrap();
         Ok(Self(percent))
-    }
-}
-
-impl Serialize for Percentile {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let percentile = self.0;
-        format!("{percentile}%").serialize(serializer)
     }
 }
