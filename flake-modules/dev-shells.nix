@@ -13,6 +13,8 @@
               "rust-analyzer"
             ];
           })
+          uv
+          hyperfine
         ];
       };
     };
