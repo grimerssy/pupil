@@ -12,6 +12,7 @@
       "assets/*"
       "migrations/*"
       "*.ftl"
+      "benches/*"
     ];
     programs.nixfmt.enable = true;
     programs.rustfmt.enable = true;
