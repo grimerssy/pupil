@@ -4,10 +4,15 @@ use crate::app::localization::LocalizedError;
 
 use super::{
     key::Key, name::Name, percentile::Percentile, signature::Signature, user_id::DbUserId,
+    verifying_key::VerifyingKey,
 };
 
 pub trait GetSignature {
     async fn get_signature(&self, key: Key) -> crate::Result<SignedEvaluation, KeyLookupError>;
+}
+
+pub trait GetVerifyingKey {
+    fn get_verifying_key(&self) -> crate::Result<VerifyingKey>;
 }
 
 pub trait GetPerformanceEvaluation {

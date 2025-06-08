@@ -5,9 +5,12 @@ use rust_decimal::{Decimal, MathematicalOps};
 use crate::{
     domain::{
         grades::GetDbGrades, key::Key, name::Name, percentile::Percentile, performance::*,
-        signature::Signature, user_id::DbUserId,
+        signature::Signature, user_id::DbUserId, verifying_key::VerifyingKey,
     },
-    services::{database::performance::lookup_key, signer::sign_evaluation},
+    services::{
+        database::performance::lookup_key,
+        signer::{get_verifying_key, sign_evaluation},
+    },
 };
 
 use super::AppContext;
@@ -122,6 +125,12 @@ async fn get_performance_evaluation_with(
 impl GetSignature for AppContext {
     async fn get_signature(&self, key: Key) -> crate::Result<SignedEvaluation, KeyLookupError> {
         get_signature_with(self, self, key).await
+    }
+}
+
+impl GetVerifyingKey for AppContext {
+    fn get_verifying_key(&self) -> crate::Result<VerifyingKey> {
+        get_verifying_key(&self.signer)
     }
 }
 

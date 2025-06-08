@@ -6,7 +6,9 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use serde_json_canonicalizer as jcs;
 
-use crate::domain::{performance::PerformanceEvaluation, signature::Signature};
+use crate::domain::{
+    performance::PerformanceEvaluation, signature::Signature, verifying_key::VerifyingKey,
+};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct SignatureConfig {
@@ -35,4 +37,10 @@ pub fn sign_evaluation(signer: &Signer, claim: &PerformanceEvaluation) -> crate:
     let mut key = signer.key.lock().unwrap();
     let signature = key.try_sign(&bytes).context("sign the claim")?;
     Ok(Signature::new(signature))
+}
+
+#[tracing::instrument(skip(signer), ret(level = "debug") err(Debug, level = "debug"))]
+pub fn get_verifying_key(signer: &Signer) -> crate::Result<VerifyingKey> {
+    let key = signer.key.lock().unwrap().verifying_key();
+    Ok(VerifyingKey::new(key))
 }

@@ -8,7 +8,10 @@ use serde::Deserialize;
 
 use crate::{
     app::{performance::get_signature, AppContext},
-    domain::performance::{KeyLookupError, SignedEvaluation},
+    domain::{
+        performance::{GetVerifyingKey, KeyLookupError, SignedEvaluation},
+        verifying_key::VerifyingKey,
+    },
     error::Error,
 };
 
@@ -18,12 +21,22 @@ use super::{
 };
 
 pub fn performance_routes() -> Router<AppContext> {
-    Router::new().route("/{key}", get(student_evaluation))
+    Router::new()
+        .route("/verifying-key", get(verifying_key))
+        .route("/{key}", get(student_evaluation))
 }
 
 #[derive(Clone, Debug, Deserialize)]
 struct EvaluationPath {
     key: String,
+}
+
+async fn verifying_key(
+    State(ctx): State<AppContext>,
+) -> Result<Json<VerifyingKey>, Template<Error>> {
+    ctx.get_verifying_key()
+        .map(Json)
+        .map_err(|error| Template::new(TemplateName::error(), error))
 }
 
 async fn student_evaluation(
