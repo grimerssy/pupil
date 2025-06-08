@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::Deserialize;
 
@@ -15,10 +15,7 @@ use crate::{
     error::Error,
 };
 
-use super::{
-    error::HttpError,
-    middleware::template::{Template, TemplateName},
-};
+use super::{error::HttpError, middleware::json::Json};
 
 pub fn performance_routes() -> Router<AppContext> {
     Router::new()
@@ -31,22 +28,15 @@ struct EvaluationPath {
     key: String,
 }
 
-async fn verifying_key(
-    State(ctx): State<AppContext>,
-) -> Result<Json<VerifyingKey>, Template<Error>> {
-    ctx.get_verifying_key()
-        .map(Json)
-        .map_err(|error| Template::new(TemplateName::error(), error))
+async fn verifying_key(State(ctx): State<AppContext>) -> Result<Json<VerifyingKey>, Json<Error>> {
+    ctx.get_verifying_key().map(Json).map_err(Json)
 }
 
 async fn student_evaluation(
     State(ctx): State<AppContext>,
     Path(path): Path<EvaluationPath>,
-) -> Result<Json<SignedEvaluation>, Template<Error<KeyLookupError>>> {
-    get_signature(&ctx, path.key)
-        .await
-        .map(Json)
-        .map_err(|error| Template::new(TemplateName::error(), error))
+) -> Result<Json<SignedEvaluation>, Json<Error<KeyLookupError>>> {
+    get_signature(&ctx, path.key).await.map(Json).map_err(Json)
 }
 
 impl HttpError for KeyLookupError {

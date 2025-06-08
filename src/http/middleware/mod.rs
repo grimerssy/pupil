@@ -3,6 +3,7 @@ pub mod not_found;
 pub mod panic;
 pub mod template;
 pub mod view;
+pub mod json;
 
 mod response;
 
