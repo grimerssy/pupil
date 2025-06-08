@@ -1,6 +1,6 @@
 {% import "components/grade.html" as grade %}
 
-<div class="flex flex-col">
+<div class="flex flex-col" hx-target="this" hx-swap="outerHTML">
   <div class="m-5 flex gap-5">
     <button class="btn btn-success btn-soft">
       {{ localize(key="add-grade", lang=locale) }}
@@ -9,7 +9,7 @@
       {{ localize(key="import-grades", lang=locale) }}
     </button>
   </div>
-  <table class="table-xl table-zebra table" id="grades">
+  <table class="table-xl table-zebra table">
     <thead>
       <tr>
         <th>{{ localize(key="student", lang=locale) }}</th>
@@ -20,17 +20,11 @@
               class="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
             >
               <li>
-                <a hx-get="/grades" hx-target="#grades" hx-swap="outerHTML">
-                  {{ localize(key="all", lang=locale) }}
-                </a>
+                <a hx-get="/grades"> {{ localize(key="all", lang=locale) }} </a>
               </li>
               {% for subject in context.data.subjects %}
                 <li>
-                  <a
-                    hx-get="/grades?subject={{ subject.id }}"
-                    hx-target="#grades"
-                    hx-swap="outerHTML"
-                  >
+                  <a hx-get="/grades?subject={{ subject.id }}">
                     {{ subject.title }}
                   </a>
                 </li>
