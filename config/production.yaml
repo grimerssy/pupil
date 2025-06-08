@@ -11,6 +11,8 @@ database:
   password: ""
   database: ""
   require_ssl: true
+signature:
+  secret: ""
 id:
   secret: ""
 hasher:

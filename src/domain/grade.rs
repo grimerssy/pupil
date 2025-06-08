@@ -15,7 +15,7 @@ const MIN_FRACTION: i64 = 0;
 const MAX_FRACTION: i64 = 10 * FRACTION_DIGITS - 1;
 
 #[serde_as]
-#[derive(Debug, Clone, Serialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Serialize, sqlx::Type)]
 #[sqlx(transparent)]
 pub struct Grade(#[serde_as(as = "DisplayFromStr")] Decimal);
 
@@ -58,6 +58,12 @@ impl Grade {
         let shifted = integer * (10 * FRACTION_DIGITS) + fraction;
         let decimal = Decimal::new(shifted, FRACTION_DIGITS as u32);
         Some(Self(decimal))
+    }
+}
+
+impl From<Grade> for Decimal {
+    fn from(value: Grade) -> Self {
+        value.0
     }
 }
 

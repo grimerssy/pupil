@@ -34,13 +34,15 @@ tera = "1.20.0"
 walkdir = "2.5.0"
 fluent-templates = { version = "0.13.0", default-features = false, features = ["tera", "walkdir"] }
 
+ed25519-dalek = { version = "2.1.1", features = ["serde"] }
 argon2 = { version = "0.5.3", features = ["std", "zeroize"] }
 jsonwebtoken = "9.3.1"
 const-fnv1a-hash = "1.1.0"
 uuid = { version = "1.17.0", default-features = true, features = ["v4", "serde"] }
+serde_json_canonicalizer = "0.3.0"
 
 email_address = { version = "0.2.9", default-features = false }
-rust_decimal = "1.37.1"
+rust_decimal = { version = "1.37.1", features = ["maths"] }
 
 config = "0.15.11"
 strum = { version = "0.27.1", features = ["derive"] }

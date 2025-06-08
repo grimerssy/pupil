@@ -8,6 +8,7 @@ use crate::services::{
     hasher::{Hasher, HasherConfig},
     id_encoder::{IdConfig, IdEncoder},
     localizer::{I18nConfig, Localizer},
+    signer::{SignatureConfig, Signer},
     templating_engine::{TemplateConfig, TemplatingEngine},
     token_issuer::{JwtConfig, TokenIssuer},
 };
@@ -15,6 +16,7 @@ use crate::services::{
 pub mod auth;
 pub mod grades;
 pub mod keys;
+pub mod performance;
 
 pub mod localization;
 pub mod validation;
@@ -23,6 +25,7 @@ pub mod validation;
 pub struct AppConfig {
     pub i18n: I18nConfig,
     pub database: DatabaseConfig,
+    pub signature: SignatureConfig,
     pub id: IdConfig,
     pub hasher: HasherConfig,
     pub jwt: JwtConfig,
@@ -33,6 +36,7 @@ pub struct AppConfig {
 pub struct AppContext {
     pub localizer: Arc<Localizer>,
     pub database: Database,
+    pub signer: Signer,
     pub id_encoder: Arc<IdEncoder>,
     pub hasher: Hasher,
     pub token_issuer: TokenIssuer,
@@ -47,6 +51,7 @@ pub enum AppError<E> {
 
 impl AppContext {
     pub fn new(config: AppConfig) -> anyhow::Result<Self> {
+        let signer = Signer::new(config.signature)?;
         let hasher = Hasher::new(config.hasher)?;
         let localizer = Arc::new(Localizer::new(config.i18n)?);
         let templating_engine =
@@ -57,6 +62,7 @@ impl AppContext {
         Ok(Self {
             localizer,
             database,
+            signer,
             id_encoder,
             hasher,
             token_issuer,

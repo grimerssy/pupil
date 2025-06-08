@@ -11,6 +11,8 @@ database:
   password: postgres
   database: postgres
   require_ssl: false
+signature:
+  secret: "abcdefghijklmnopqrstuvwxyz123456"
 id:
   secret: ""
 hasher:

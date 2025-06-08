@@ -3,6 +3,7 @@ use keys::keys_routes;
 pub use middleware::template::{LocaleNegotiator, TemplateRenderer};
 
 use auth::auth_routes;
+use performance::performance_routes;
 use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
 use static_files::static_router;
 use tower_http::{catch_panic::CatchPanicLayer, trace::TraceLayer};
@@ -24,6 +25,7 @@ mod middleware;
 mod auth;
 mod grades;
 mod keys;
+mod performance;
 
 mod static_files;
 
@@ -56,6 +58,7 @@ fn root_router() -> Router<AppContext> {
         .nest("/auth", auth_routes())
         .nest("/grades", grades_routes())
         .nest("/keys", keys_routes())
+        .nest("/performance", performance_routes())
 }
 
 async fn homepage() -> Template<()> {

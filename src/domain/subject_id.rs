@@ -9,7 +9,7 @@ use crate::app::{
 const MIN_LENGTH: usize = 2;
 const MAX_LENGTH: usize = 50;
 
-#[derive(Educe, Debug, Clone, Serialize, sqlx::Type)]
+#[derive(Educe, Debug, Clone, Serialize, Hash, PartialEq, Eq, sqlx::Type)]
 #[educe(Into(String))]
 #[sqlx(transparent)]
 pub struct SubjectId(String);
