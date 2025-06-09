@@ -50,7 +50,7 @@ pub enum KeyLookupError {
 impl From<KeyLookupError> for LocalizedError {
     fn from(value: KeyLookupError) -> Self {
         match value {
-            KeyLookupError::UnknownKey => Self::new("NOT_FOUND"),
+            KeyLookupError::UnknownKey => Self::new("UNKNOWN_KEY"),
         }
     }
 }
