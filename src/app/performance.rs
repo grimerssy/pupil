@@ -71,7 +71,9 @@ async fn get_performance_evaluation_with(
                 .iter()
                 .map(|grade| (grade - means.get(subject).unwrap()).powu(2))
                 .sum::<Decimal>();
-            let variance = deviation_sum / Decimal::new((grades.len() - 1) as i64, 0);
+            let variance = deviation_sum
+                .checked_div(Decimal::new((grades.len() - 1) as i64, 0))
+                .unwrap_or(Decimal::ZERO);
             let std_deviation = variance.sqrt().unwrap();
             (subject, std_deviation)
         })
@@ -113,7 +115,9 @@ async fn get_performance_evaluation_with(
         .filter(|&(_, z_score)| *z_score <= target_z_score)
         .count();
     let total = avg_z_scores.len();
-    let percentile = Decimal::new(below_target as i64, 0) / Decimal::new(total as i64, 0);
+    let percentile = Decimal::new(below_target as i64, 0)
+        .checked_div(Decimal::new(total as i64, 0))
+        .unwrap_or(Decimal::ONE);
     let percentile = Percentile::new(percentile)?;
     let evaluation = PerformanceEvaluation {
         student: student_name,
