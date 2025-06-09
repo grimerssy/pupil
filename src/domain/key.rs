@@ -26,6 +26,6 @@ impl TryFrom<String> for Key {
                 || LocalizedError::new("INVALID_KEY"),
             )
             .finish()
-            .map(|value| Key(Uuid::try_parse(&value).unwrap()))
+            .map(|value| Self(Uuid::try_parse(&value).unwrap()))
     }
 }

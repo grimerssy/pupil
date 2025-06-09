@@ -50,6 +50,7 @@ impl From<GenerateKeyError> for LocalizedError {
         }
     }
 }
+
 impl From<RemoveKeyError> for LocalizedError {
     fn from(value: RemoveKeyError) -> Self {
         match value {
