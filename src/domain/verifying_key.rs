@@ -14,12 +14,6 @@ impl Serialize for VerifyingKey {
     where
         S: serde::Serializer,
     {
-        #[allow(clippy::format_collect)]
-        self.0
-            .to_bytes()
-            .iter()
-            .map(|byte| format!("{byte:02X}"))
-            .collect::<String>()
-            .serialize(serializer)
+        hex::serialize_upper(self.0, serializer)
     }
 }
