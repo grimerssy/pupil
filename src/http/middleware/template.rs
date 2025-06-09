@@ -75,7 +75,6 @@ pub(super) async fn render_template(
         match renderer.render_template(&template.template_name, template.data.message, &locale) {
             Ok(html) => html,
             Err(error) => {
-                let error: crate::Error<std::convert::Infallible, ()> = error;
                 response = Template::new(TemplateName::error(), error).into_response();
                 let template = response
                     .extensions_mut()
