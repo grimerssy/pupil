@@ -4,7 +4,7 @@ use axum::{
     http::header::ACCEPT,
     middleware::Next,
     response::{IntoResponse, Response},
-    Extension, Json,
+    Extension,
 };
 use mime::{APPLICATION_JSON, TEXT_HTML};
 use serde::Serialize;
@@ -12,8 +12,7 @@ use serde::Serialize;
 use crate::http::error::HttpError;
 
 use super::{
-    response::{ErrorType, HttpResponse},
-    template::{Template, TemplateName},
+    json::Json, response::{ErrorType, HttpResponse}, template::{Template, TemplateName}
 };
 
 #[derive(Clone, Debug)]
@@ -47,7 +46,7 @@ pub(super) async fn render_view(req: Request, next: Next) -> Response {
         .and_then(|accept| accept.negotiate(&[APPLICATION_JSON, TEXT_HTML]).ok())
         .unwrap_or(TEXT_HTML);
     let body = match preference {
-        mime if mime == APPLICATION_JSON => Json(view.data.message).into_response(),
+        mime if mime == APPLICATION_JSON => Json(view.data).into_response(),
         mime if mime == TEXT_HTML => {
             let template = Template::new(view.template_name, view.data);
             Extension(template).into_response()
