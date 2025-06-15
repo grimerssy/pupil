@@ -12,7 +12,9 @@ use serde::Serialize;
 use crate::http::error::HttpError;
 
 use super::{
-    json::Json, response::{ErrorType, HttpResponse}, template::{Template, TemplateName}
+    json::Json,
+    response::{ErrorType, HttpResponse},
+    template::{Template, TemplateName},
 };
 
 #[derive(Clone, Debug)]
@@ -47,10 +49,7 @@ pub(super) async fn render_view(req: Request, next: Next) -> Response {
         .unwrap_or(TEXT_HTML);
     let body = match preference {
         mime if mime == APPLICATION_JSON => Json(view.data).into_response(),
-        mime if mime == TEXT_HTML => {
-            let template = Template::new(view.template_name, view.data);
-            Extension(template).into_response()
-        }
+        mime if mime == TEXT_HTML => Template::new(view.template_name, view.data).into_response(),
         _ => unreachable!(),
     };
     let (parts, _) = response.into_parts();
