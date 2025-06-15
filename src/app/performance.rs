@@ -46,7 +46,6 @@ async fn get_performance_evaluation_with(
         .get_db_grades(None)
         .await
         .map_err(crate::Error::from_internal)?;
-
     let subject_grades = grades
         .iter()
         .fold(HashMap::<_, Vec<_>>::new(), |mut map, record| {
