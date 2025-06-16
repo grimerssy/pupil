@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{convert::Infallible, str::FromStr};
 
 use squint::Id;
 
@@ -16,7 +16,7 @@ use crate::{
     },
 };
 
-use super::AppContext;
+use super::{validation::ValidationErrors, AppContext, AppError};
 
 impl GetSubjects for AppContext {
     #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
@@ -48,17 +48,27 @@ pub async fn get_grades(
     ctx.get_grades(subject).await
 }
 
+pub struct UpdateGradeRequest {
+    pub subject: SubjectId,
+    pub student: UserId,
+    pub grade: Grade,
+}
+
 #[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
-pub async fn update_grade(
+pub async fn update_grade<T>(
     ctx: &AppContext,
-    subject: String,
-    student: String,
-    grade: String,
-) -> crate::Result<GradeRecord> {
-    let subject = SubjectId::new(subject).unwrap();
-    let student = Id::from_str(&student).map(UserId::new).unwrap();
-    let grade = Grade::new(grade).unwrap();
-    ctx.update_grade(subject, student, grade).await
+    req: T,
+) -> crate::Result<GradeRecord, AppError<Infallible>>
+where
+    T: core::fmt::Debug + TryInto<UpdateGradeRequest, Error = ValidationErrors>,
+{
+    let req = req
+        .try_into()
+        .map_err(AppError::Validation)
+        .map_err(crate::Error::expected)?;
+    ctx.update_grade(req.subject, req.student, req.grade)
+        .await
+        .map_err(crate::Error::cast)
 }
 
 impl GetGrade for AppContext {

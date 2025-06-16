@@ -42,3 +42,5 @@ error-password-no-uppercase = {password} must contain at least one uppercase let
 error-password-no-digits = {password} must contain at least one digit
 
 error-password-no-special = {password} must contain at least one special character
+
+error-grade-invalid-format = Enter a value from {$min} to {$max} with optional {$fraction-digits} digit fraction

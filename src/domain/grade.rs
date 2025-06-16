@@ -50,7 +50,7 @@ impl Grade {
         .ok()?;
         let (integer, fraction) = match (integer, fraction) {
             (integer @ MAX_INTEGER, fraction @ MIN_FRACTION)
-            | (integer @ MIN_INTEGER..=MAX_INTEGER, fraction @ MIN_FRACTION..=MAX_FRACTION) => {
+            | (integer @ MIN_INTEGER..MAX_INTEGER, fraction @ MIN_FRACTION..=MAX_FRACTION) => {
                 Some((integer, fraction))
             }
             _ => None,

@@ -1,12 +1,19 @@
+use std::convert::Infallible;
+
 use axum::{
-    extract::{Path, Query, State}, http::StatusCode, response::{IntoResponse, Response}, routing::{get, put}, Form, Router
+    extract::{Path, Query, State},
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::{get, put},
+    Form, Router,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{
-        grades::{get_grade, get_grades, update_grade},
-        AppContext,
+        grades::{get_grade, get_grades, update_grade, UpdateGradeRequest},
+        validation::{try_convert, ValidationErrors},
+        AppContext, AppError,
     },
     domain::{
         auth::User,
@@ -18,7 +25,7 @@ use crate::{
 
 use super::{
     error::HttpError,
-    middleware::template::{Template, TemplateName},
+    middleware::{template::{Template, TemplateName}, view::View},
 };
 
 const GRADE: &str = "components/grade.html";
@@ -81,15 +88,27 @@ struct GradeForm {
     grade: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct GradeThing {
+    pub subject: String,
+    pub student: String,
+    pub grade: String,
+}
+
 async fn edit_grade(
     State(ctx): State<AppContext>,
     Path(path): Path<GradePath>,
     Form(form): Form<GradeForm>,
-) -> Result<Template<GradeRecord>, Template<Error>> {
-    update_grade(&ctx, path.subject_id, path.student_id, form.grade)
+) -> Result<View<GradeRecord>, View<Error<AppError<Infallible>, GradeThing>>> {
+    let req = GradeThing {
+        subject: path.subject_id,
+        student: path.student_id,
+        grade: form.grade,
+    };
+    update_grade(&ctx, req.clone())
         .await
-        .map(|grade| Template::new(GRADE, grade))
-        .map_err(|error| Template::new(TemplateName::error(), error))
+        .map(|grade| View::new(GRADE, grade))
+        .map_err(|error| View::new(GRADE_EDIT, error.with_input(req)))
 }
 
 async fn grades_page(
@@ -118,5 +137,17 @@ impl HttpError for GetGradeError {
         match self {
             Self::NotFound => StatusCode::NOT_FOUND,
         }
+    }
+}
+
+impl TryFrom<GradeThing> for UpdateGradeRequest {
+    type Error = ValidationErrors;
+
+    fn try_from(value: GradeThing) -> Result<Self, Self::Error> {
+        try_convert!(GradeThing value => UpdateGradeRequest {
+            student,
+            subject,
+            grade
+        })
     }
 }

@@ -1,24 +1,40 @@
-{% set grade = context.data %}
+{% import "components/error.html" as error %}
 
-<tr hx-target="this" hx-swap="outerHTML">
-  <td>{{ grade.studentName }}</td>
-  <td>{{ grade.subjectTitle }}</td>
-  <td>
-    <input
-      type="text"
-      name="grade"
-      value="{{ grade.grade }}"
-      class="input w-24 text-xl"
-    />
-  </td>
-  <td>
-    <button
-      type="submit"
-      class="btn btn-soft btn-success"
-      hx-put="/grades/{{ grade.subjectId }}/{{ grade.studentId }}"
-      hx-include="closest tr"
-    >
-      {{ localize(key="save", lang=locale) }}
-    </button>
-  </td>
-</tr>
+{% if context.status == "success" %}
+  <tr
+    hx-target="this"
+    hx-swap="outerHTML"
+    hx-target-error="#grade-error-{{ context.data.subjectId }}-{{ context.data.studentId }}"
+  >
+    <td>{{ context.data.studentName }}</td>
+    <td>{{ context.data.subjectTitle }}</td>
+    <td class="flex flex-col">
+      <input
+        type="text"
+        name="grade"
+        value="{{ context.data.grade }}"
+        class="input w-24 text-xl"
+      />
+      <span
+        id="grade-error-{{ context.data.subjectId }}-{{ context.data.studentId }}"
+      ></span>
+    </td>
+    <td>
+      <button
+        type="submit"
+        class="btn btn-soft btn-success top-0 mb-5"
+        hx-put="/grades/{{ context.data.subjectId }}/{{ context.data.studentId }}"
+        hx-include="closest tr"
+      >
+        {{ localize(key="save", lang=locale) }}
+      </button>
+    </td>
+  </tr>
+{% else %}
+  <span
+    id="grade-error-{{ context.input.subject }}-{{ context.input.student }}"
+    class="relative whitespace-nowrap text-sm max-w-1 mt-3"
+  >
+    {{ error::error(error=context.data.grade[0]) }}
+  </span>
+{% endif %}
