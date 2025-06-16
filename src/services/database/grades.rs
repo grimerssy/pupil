@@ -1,4 +1,5 @@
 use crate::domain::{
+    grade::Grade,
     grades::{DbGradeRecord, GetGradeError, StudentGrade, Subject},
     subject_id::SubjectId,
     user_id::DbUserId,
@@ -101,5 +102,29 @@ pub async fn get_db_student_grades(
     .bind(student_id)
     .fetch_all(&db.pool)
     .await
+    .map_err(sql_error)
+}
+
+#[tracing::instrument(skip(db), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn update_db_grade(
+    db: &Database,
+    subject: SubjectId,
+    student: DbUserId,
+    grade: Grade,
+) -> crate::Result<()> {
+    sqlx::query(
+        "
+        update grades
+        set value = $1
+        where user_id = $2
+          and subject_id = $3
+        ",
+    )
+    .bind(grade)
+    .bind(student)
+    .bind(subject)
+    .execute(&db.pool)
+    .await
+    .map(|_| ())
     .map_err(sql_error)
 }

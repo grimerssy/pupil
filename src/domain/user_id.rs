@@ -9,7 +9,7 @@ use squint::{tag, Id};
 pub struct DbUserId(i64);
 
 #[serde_as]
-#[derive(Educe, Clone, Debug, Serialize, Deserialize)]
+#[derive(Educe, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[educe(Into(Id<{tag("user")}>))]
 pub struct UserId(#[serde_as(as = "DisplayFromStr")] Id<{ tag("user") }>);
 

@@ -5,13 +5,14 @@ use squint::Id;
 use crate::{
     domain::{
         auth::{DecodeUserId, EncodeUserId},
+        grade::Grade,
         grades::*,
         subject_id::SubjectId,
         user_id::{DbUserId, UserId},
     },
     error::ErrorKind,
     services::database::grades::{
-        get_db_grade, get_db_grades, get_db_student_grades, get_subjects,
+        get_db_grade, get_db_grades, get_db_student_grades, get_subjects, update_db_grade,
     },
 };
 
@@ -47,6 +48,19 @@ pub async fn get_grades(
     ctx.get_grades(subject).await
 }
 
+#[tracing::instrument(skip(ctx), ret(level = "debug") err(Debug, level = "debug"))]
+pub async fn update_grade(
+    ctx: &AppContext,
+    subject: String,
+    student: String,
+    grade: String,
+) -> crate::Result<GradeRecord> {
+    let subject = SubjectId::new(subject).unwrap();
+    let student = Id::from_str(&student).map(UserId::new).unwrap();
+    let grade = Grade::new(grade).unwrap();
+    ctx.update_grade(subject, student, grade).await
+}
+
 impl GetGrade for AppContext {
     async fn get_grade(
         &self,
@@ -67,6 +81,17 @@ impl GetStudentGrades for AppContext {
     #[tracing::instrument(skip(self), ret(level = "debug") err(Debug, level = "debug"))]
     async fn get_student_grades(&self, student_id: UserId) -> crate::Result<Vec<StudentGrade>> {
         get_student_grades_with(self, self, student_id).await
+    }
+}
+
+impl UpdateGrade for AppContext {
+    async fn update_grade(
+        &self,
+        subject: SubjectId,
+        student: UserId,
+        grade: Grade,
+    ) -> crate::Result<GradeRecord> {
+        update_grade_with(self, self, self, subject, student, grade).await
     }
 }
 
@@ -144,6 +169,27 @@ async fn get_student_grades_with(
     storage.get_db_student_grades(student_id).await
 }
 
+async fn update_grade_with(
+    decoder: &impl DecodeUserId,
+    setter: &impl UpdateDbGrade,
+    getter: &impl GetGrades,
+    subject: SubjectId,
+    student: UserId,
+    grade: Grade,
+) -> crate::Result<GradeRecord> {
+    let student_id = decoder.decode_user_id(student.clone()).unwrap();
+    setter
+        .update_db_grade(subject.clone(), student_id, grade)
+        .await?;
+    let grade = getter
+        .get_grades(Some(subject))
+        .await?
+        .into_iter()
+        .find(|grade| grade.student_id == student)
+        .unwrap();
+    Ok(grade)
+}
+
 impl GetDbGrade for AppContext {
     async fn get_db_grade(
         &self,
@@ -169,5 +215,16 @@ impl GetDbStudentGrades for AppContext {
         student_id: DbUserId,
     ) -> crate::Result<Vec<StudentGrade>> {
         get_db_student_grades(&self.database, student_id).await
+    }
+}
+
+impl UpdateDbGrade for AppContext {
+    async fn update_db_grade(
+        &self,
+        subject: SubjectId,
+        student: DbUserId,
+        grade: crate::domain::grade::Grade,
+    ) -> crate::Result<()> {
+        update_db_grade(&self.database, subject, student, grade).await
     }
 }

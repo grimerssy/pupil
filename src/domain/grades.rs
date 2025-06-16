@@ -48,6 +48,24 @@ pub trait GetDbGrades {
     async fn get_db_grades(&self, subject: Option<SubjectId>) -> crate::Result<Vec<DbGradeRecord>>;
 }
 
+pub trait UpdateGrade {
+    async fn update_grade(
+        &self,
+        subject: SubjectId,
+        student: UserId,
+        grade: Grade,
+    ) -> crate::Result<GradeRecord>;
+}
+
+pub trait UpdateDbGrade {
+    async fn update_db_grade(
+        &self,
+        subject: SubjectId,
+        student: DbUserId,
+        grade: Grade,
+    ) -> crate::Result<()>;
+}
+
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct Subject {
     pub id: SubjectId,

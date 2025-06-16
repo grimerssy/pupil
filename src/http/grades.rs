@@ -1,15 +1,11 @@
 use axum::{
-    extract::{Path, Query, State},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::{get, put},
-    Router,
+    extract::{Path, Query, State}, http::StatusCode, response::{IntoResponse, Response}, routing::{get, put}, Form, Router
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{
-        grades::{get_grade, get_grades},
+        grades::{get_grade, get_grades, update_grade},
         AppContext,
     },
     domain::{
@@ -37,7 +33,7 @@ pub fn grades_routes() -> Router<AppContext> {
     let grade_routes = Router::new()
         .route("/", get(grade))
         .route("/edit", get(grade_edit))
-        .route("/", put(grade));
+        .route("/", put(edit_grade));
     Router::new()
         .route("/", get(grades_page))
         .nest("/{subject_id}/{student_id}", grade_routes)
@@ -77,6 +73,22 @@ async fn grade_edit(
     get_grade(&ctx, path.subject_id, path.student_id)
         .await
         .map(|grade| Template::new(GRADE_EDIT, grade))
+        .map_err(|error| Template::new(TemplateName::error(), error))
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct GradeForm {
+    grade: String,
+}
+
+async fn edit_grade(
+    State(ctx): State<AppContext>,
+    Path(path): Path<GradePath>,
+    Form(form): Form<GradeForm>,
+) -> Result<Template<GradeRecord>, Template<Error>> {
+    update_grade(&ctx, path.subject_id, path.student_id, form.grade)
+        .await
+        .map(|grade| Template::new(GRADE, grade))
         .map_err(|error| Template::new(TemplateName::error(), error))
 }
 
