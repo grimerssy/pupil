@@ -9,10 +9,10 @@ use crate::app::{
 
 const MIN_INTEGER: i64 = 0;
 const MAX_INTEGER: i64 = 100;
-const FRACTION_DIGITS: i64 = 2;
+const FRACTION_DIGITS: u32 = 2;
 
 const MIN_FRACTION: i64 = 0;
-const MAX_FRACTION: i64 = 10 * FRACTION_DIGITS - 1;
+const MAX_FRACTION: i64 = 10i64.pow(FRACTION_DIGITS) - 1;
 
 #[serde_as]
 #[derive(Debug, Clone, Copy, Serialize, sqlx::Type)]
@@ -55,8 +55,8 @@ impl Grade {
             }
             _ => None,
         }?;
-        let shifted = integer * (10 * FRACTION_DIGITS) + fraction;
-        let decimal = Decimal::new(shifted, FRACTION_DIGITS as u32);
+        let shifted = integer * 10i64.pow(FRACTION_DIGITS) + fraction;
+        let decimal = Decimal::new(shifted, FRACTION_DIGITS);
         Some(Self(decimal))
     }
 }
