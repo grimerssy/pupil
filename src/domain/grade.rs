@@ -39,7 +39,11 @@ impl Grade {
         let (integer, fraction) = match grade.split_once('.') {
             Some((integer, fraction)) => {
                 let integer = integer.parse::<i64>();
-                let fraction = fraction.parse::<i64>();
+                let fraction = if fraction.len() == 1 {
+                    fraction.parse::<i64>().map(|x| x * 10)
+                } else {
+                    fraction.parse::<i64>()
+                };
                 integer.and_then(|integer| fraction.map(|fraction| (integer, fraction)))
             }
             None => {
