@@ -5,9 +5,10 @@
     <button class="btn btn-success btn-soft">
       {{ localize(key="add-grade", lang=locale) }}
     </button>
-    <button class="btn btn-success btn-soft">
+    <label class="btn btn-success btn-soft">
       {{ localize(key="import-grades", lang=locale) }}
-    </button>
+      <input type="file" class="hidden" />
+    </label>
   </div>
   <table class="table-xl table-zebra table">
     <thead>
