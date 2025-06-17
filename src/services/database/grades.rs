@@ -114,15 +114,17 @@ pub async fn update_db_grade(
 ) -> crate::Result<()> {
     sqlx::query(
         "
-        update grades
-        set value = $1
-        where user_id = $2
-          and subject_id = $3
+        insert into grades
+          (user_id, subject_id, value)
+        values
+          ($1, $2, $3)
+        on conflict (user_id, subject_id) do update
+        set value = $3
         ",
     )
-    .bind(grade)
     .bind(student)
     .bind(subject)
+    .bind(grade)
     .execute(&db.pool)
     .await
     .map(|_| ())

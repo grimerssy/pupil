@@ -66,7 +66,7 @@ pub trait UpdateDbGrade {
     ) -> crate::Result<()>;
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, sqlx::FromRow)]
 pub struct Subject {
     pub id: SubjectId,
     pub title: SubjectTitle,

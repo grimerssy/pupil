@@ -45,3 +45,9 @@ impl TryFrom<String> for UserId {
             .map(|v| Id::from_str(&v).map(UserId::new).unwrap())
     }
 }
+
+impl std::hash::Hash for UserId {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.to_string().hash(state)
+    }
+}

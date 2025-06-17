@@ -1,10 +1,10 @@
-use std::convert::Infallible;
+use std::{collections::HashSet, convert::Infallible};
 
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::{get, put},
+    response::{Html, IntoResponse, Response},
+    routing::{get, post, put},
     Form, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -17,20 +17,27 @@ use crate::{
     },
     domain::{
         auth::User,
-        grades::{GetGradeError, GetStudentGrades, GetSubjects, GradeRecord, Subject},
+        grades::{GetGradeError, GetGrades, GetStudentGrades, GetSubjects, GradeRecord, Subject},
+        name::Name,
         role::Role,
+        user_id::UserId,
     },
     error::Error,
 };
 
 use super::{
     error::HttpError,
-    middleware::{template::{Template, TemplateName}, view::View},
+    middleware::{
+        template::{Template, TemplateName},
+        view::View,
+    },
 };
 
 const GRADE: &str = "components/grade.html";
 
 const GRADE_EDIT: &str = "components/grade-edit.html";
+
+const GRADE_ADD: &str = "grade-add.html";
 
 const TEACHER_GRADES: &str = "teacher-grades.html";
 
@@ -43,6 +50,8 @@ pub fn grades_routes() -> Router<AppContext> {
         .route("/", put(edit_grade));
     Router::new()
         .route("/", get(grades_page))
+        .route("/add", get(grade_add))
+        .route("/add", post(add_grade))
         .nest("/{subject_id}/{student_id}", grade_routes)
 }
 
@@ -81,6 +90,68 @@ async fn grade_edit(
         .await
         .map(|grade| Template::new(GRADE_EDIT, grade))
         .map_err(|error| Template::new(TemplateName::error(), error))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize)]
+struct Student {
+    id: UserId,
+    name: Name,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct GradeAddOptions {
+    students: HashSet<Student>,
+    subjects: HashSet<Subject>,
+}
+
+async fn grade_add(
+    State(ctx): State<AppContext>,
+) -> Result<Template<GradeAddOptions>, Template<Error>> {
+    let grades = ctx
+        .get_grades(None)
+        .await
+        .map_err(|error| Template::new(TemplateName::error(), error))?;
+    let students = grades
+        .iter()
+        .cloned()
+        .map(|record| Student {
+            id: record.student_id,
+            name: record.student_name,
+        })
+        .collect();
+    let subjects = grades
+        .iter()
+        .cloned()
+        .map(|record| Subject {
+            id: record.subject_id,
+            title: record.subject_title,
+        })
+        .collect();
+    let options = GradeAddOptions { students, subjects };
+    Ok(Template::new(GRADE_ADD, options))
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+struct NewGrade {
+    subject_id: String,
+    student_id: String,
+    grade: String,
+}
+
+async fn add_grade(
+    State(ctx): State<AppContext>,
+    Form(form): Form<NewGrade>,
+) -> Result<Html<&'static str>, View<Error<AppError<Infallible>>>> {
+    let req = GradeThing {
+        subject: form.subject_id,
+        student: form.student_id,
+        grade: form.grade,
+    };
+    update_grade(&ctx, req)
+        .await
+        .map(|_| Html("<script>window.location = \"/\"</script>"))
+        .map_err(|error| View::new(TemplateName::error(), error))
 }
 
 #[derive(Clone, Debug, Deserialize)]

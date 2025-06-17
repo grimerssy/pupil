@@ -2,9 +2,9 @@
 
 <div class="flex flex-col" hx-target="this" hx-swap="outerHTML">
   <div class="m-5 flex gap-5">
-    <button class="btn btn-success btn-soft">
+    <a href="/grades/add" hx-target="body" class="btn btn-success btn-soft">
       {{ localize(key="add-grade", lang=locale) }}
-    </button>
+    </a>
     <label class="btn btn-success btn-soft">
       {{ localize(key="import-grades", lang=locale) }}
       <input type="file" class="hidden" />
